@@ -5,6 +5,8 @@ const axiosInstance = require("./axiosConfig");
 const { bot, graphEndpoint, rpcEndpoint, saveLocation } = require("./bot");
 require('dotenv').config(); // Load environment variables
 
+const { getMidnightTimestamps, getBlockNumbers } = require('./helpers');
+
 // Chart defaults
 const width = 500; // width of the chart
 const height = 300; // height of the chart
@@ -475,28 +477,58 @@ async function generateSupplyChart(title, token, isHourly = false, ticks = 'day'
   return `${saveLocation}/${title}.png`; // Return the file path
 }
 
-async function getMidnightTimestamps(days) {
-  const timestamps = [];
-  const now = new Date();
+// async function getMidnightTimestamps(days) {
+//   const timestamps = [];
+//   const now = new Date();
 
-  for (let i = 0; i < days; i++) {
-    const date = new Date(now);
-    date.setUTCDate(now.getUTCDate() - i);
-    date.setUTCHours(0, 0, 0, 0); // Set to midnight GMT
-    timestamps.push(Math.floor(date.getTime() / 1000)); // Convert to Unix timestamp
+//   for (let i = 0; i < days; i++) {
+//     const date = new Date(now);
+//     date.setUTCDate(now.getUTCDate() - i);
+//     date.setUTCHours(0, 0, 0, 0); // Set to midnight GMT
+//     timestamps.push(Math.floor(date.getTime() / 1000)); // Convert to Unix timestamp
+//   }
+
+//   // Sort the timestamps in ascending order
+//   timestamps.sort((a, b) => a - b);
+
+//   return timestamps;
+// }
+
+// async function getBlockNumbers(timestamps) {
+//   const requests = timestamps.map((timestamp, index) => ({
+//     jsonrpc: "2.0",
+//     method: "erigon_getBlockByTimestamp",
+//     params: [timestamp.toString(), false],
+//     id: index + 1
+//   }));
+
+//   const response = await axiosInstance.post(rpcEndpoint, requests, {
+//     headers: { 'Content-Type': 'application/json' }
+//   });
+
+//   return response.data.map(res => ({
+//     timestamp: timestamps[res.id - 1],
+//     blockNumber: res.result.number
+//   }));
+// }
+
+async function getBurned(blockNumbers, token) {
+  let contractAddress = token.contractAddress;
+  if (typeof contractAddress !== 'string') {
+    throw new Error('Invalid contract address');
   }
-
-  // Sort the timestamps in ascending order
-  timestamps.sort((a, b) => a - b);
-
-  return timestamps;
-}
-
-async function getBlockNumbers(timestamps) {
-  const requests = timestamps.map((timestamp, index) => ({
+  contractAddress = contractAddress.toLowerCase();
+  // Function: totalBurned(), Selector: d89135cd
+  const requests = blockNumbers.map((block, index) => ({
     jsonrpc: "2.0",
-    method: "erigon_getBlockByTimestamp",
-    params: [timestamp.toString(), false],
+    method: "eth_call",
+    params: [
+      {
+        to: contractAddress,
+        data: "0xd89135cd"
+      },
+      block.blockNumber
+    ],
     id: index + 1
   }));
 
@@ -504,14 +536,124 @@ async function getBlockNumbers(timestamps) {
     headers: { 'Content-Type': 'application/json' }
   });
 
-  return response.data.map(res => ({
-    timestamp: timestamps[res.id - 1],
-    blockNumber: res.result.number
-  }));
+  return response.data.map((res, index) => {
+    const balanceHex = res.result;
+    const balance = parseInt(balanceHex, 16) / 1e18;
+    return {
+      timestamp: blockNumbers[index].timestamp,
+      blockNumber: blockNumbers[index].blockNumber,
+      balance: balance
+    };
+  });
 }
+
+async function generateBurnedChart(title, token, isHourly = false, ticks = 'day') {
+  const timestamps = await getMidnightTimestamps(30);
+  const blockNumbers = await getBlockNumbers(timestamps);
+  // console.log('blockNumbers = ', blockNumbers);
+  const burned = await getBurned(blockNumbers, token);
+  // console.log(burned);
+
+  // Extract labels (timestamps) and data (balances)
+  const labels = burned.map(entry => new Date(entry.timestamp * 1000).toISOString().split('T')[0]);
+  const data = burned.map(entry => entry.balance);
+
+  const chartData = {
+    labels: labels,
+    datasets: [
+      {
+        label: 'Balance',
+        data: data,
+        borderColor: token.featureColour,
+        // backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        fill: false,
+      }
+    ]
+  };
+
+  const chartJSNodeCanvas = new ChartJSNodeCanvas({
+    width,
+    height,
+    backgroundColour,
+  });
+
+  const configuration = {
+    type: 'line',
+    data: chartData,
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: title,
+          color: colour,
+          font: {
+            size: 20,
+          },
+        },
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          type: 'linear',
+          position: 'left',
+          title: {
+            display: true,
+            text: 'Total Burned',
+            color: colour
+          },
+          ticks: {
+            callback: function(value) {
+              return value >= 1000 ? (value / 1000) + 'k' : value;
+            },
+            color: colour
+          },
+          grid: {
+            color: borderColour,
+            display: false
+          }
+        },
+        x: {
+          ticks: {
+            callback: function(value, index, values) {
+              const date = new Date(chartData.labels[index]);
+              const day = date.getDate();
+              const hour = date.getHours();
+              
+              if (ticks === 'hour' && isHourly) {
+                return index % 2 === 0 ? hour : ''; // Show just the hour number for every second tick
+              } else {
+                return index % 2 === 0 ? day : ''; // Display the day number for every second tick
+              }
+            },
+            autoSkip: false, // Ensure all ticks are considered
+            maxRotation: 0, // Prevent rotation of labels
+            minRotation: 0, // Prevent rotation of labels
+            color: colour,
+          },
+          grid: {
+            color: borderColour,
+            display: false
+          }
+        }
+      },
+      layout: {
+        backgroundColor: backgroundColour,
+      },
+      spanGaps: false // Ensure lines only appear where there is a label
+    }
+  };
+
+  const imageBuffer = await chartJSNodeCanvas.renderToBuffer(configuration); // , 'image'
+  fs.writeFileSync(`${saveLocation}/${title}.png`, imageBuffer);
+  return `${saveLocation}/${title}.png`; // Return the file path
+}
+
 
 // Export the functions
 module.exports = {
   generateChart,
   generateSupplyChart,
+  generateBurnedChart
 };

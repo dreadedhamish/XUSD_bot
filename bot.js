@@ -16,6 +16,7 @@ const bot = new Bot(process.env.BOT_TOKEN); // Use environment variable for toke
 // Limits message handling to a message per second for each user.
 bot.use(limit());
 
+bot.use(ignoreOld());
 
 // new_bot.js
 const graphEndpoint = "https://graph.pulsechain.com/subgraphs/name/pulsechain/pulsexv2";
@@ -34,7 +35,10 @@ module.exports = {
 const { fetchPriceMultiBlock, formatPriceChangesMessage } = require('./price');
 
 // Import the functions from charts.js
-const { generateChart, generateSupplyChart } = require('./charts');
+const { generatePriceChart, generateSupplyChart, generateBurnedChart } = require('./charts');
+
+// Import helpers
+const { getTotalBurned, getUSDPrice, escapeMarkdownV2 } = require('./helpers');
 
 // Define contract addresses and main pairs
 // Non-checksummed addresses only
@@ -66,8 +70,6 @@ const tokens = [
   }
   // Add more tokens here as needed
 ];
-
-bot.use(ignoreOld());
 
 function getToken(command, chatID) {
   console.log('command:', command, 'type:', typeof command);
@@ -109,8 +111,7 @@ bot.command('price', async (ctx) => {
   }
 });
 
-// Command handler for /1d and /1d_<token>
-// bot.command(/1d(_\w+)?/, async (ctx) => {
+// Command handler for /1d
 bot.command('1d', async (ctx) => {
   const command = ctx.message.text.split(' ')[0];
   console.log('Received command:', command);
@@ -173,7 +174,7 @@ bot.command('1d', async (ctx) => {
 
 });
 
-// Command handler for /7d and /7d_<token>
+// Command handler for /7d
 bot.command('7d', async (ctx) => {
   const command = ctx.message.text.split(' ')[0];
   console.log('Received command:', command);
@@ -236,51 +237,7 @@ bot.command('7d', async (ctx) => {
   }
 });
 
-// bot.command('7d', async (ctx) => {
-//   const command = ctx.message.text.split(' ')[0];
-//   console.log('Received command:', command);
-//   const token = getToken(command, ctx.chat.id);
-//   if (!token) {
-//     await ctx.reply('Sorry, no token found for this command.');
-//     return;
-//   }
-//   const query = `
-//     {
-//       pairHourDatas(
-//           first: 336
-//           where: {
-//               pair_in: [
-//                   "0x146e1f1e060e5b5016db0d118d2c5a11a240ae32"
-//                   "${token.mainPair}"
-//               ]
-//           }
-//           orderBy: hourStartUnix
-//           orderDirection: desc
-//       ) {
-//           reserve0
-//           reserve1
-//           hourStartUnix
-//           pair {
-//               id
-//           }
-//           hourlyVolumeUSD
-//       }
-//       pair(id: "${token.mainPair}") {
-//           token1 {
-//               derivedUSD
-//           }
-//       }
-//     }
-//   `;
-//   try {
-//     const filePath = await generateChart(query, `${token.name} - 7d`, token, true, 'day');
-//     await ctx.replyWithPhoto(new InputFile(filePath));
-//   } catch (error) {
-//     console.error('Error generating chart:', error);
-//     await ctx.reply('Sorry, there was an error generating the chart.');
-//   }
-// });
-
+// Command handler for /7d
 bot.command('30d', async (ctx) => {
   const command = ctx.message.text.split(' ')[0];
   console.log('Received command:', command);
@@ -331,6 +288,86 @@ bot.command('30d', async (ctx) => {
     await ctx.reply('Sorry, there was an error generating the chart.');
   }
 });
+
+bot.command('burned_chart', async (ctx) => {
+  const command = ctx.message.text.split(' ')[0];
+  console.log('Received command:', command, ctx.chat.id);
+  const token = getToken(command, ctx.chat.id);
+  if (!token) {
+    await ctx.reply('Sorry, no token found for this command.');
+    return;
+  }
+  
+  const filePath = path.join(saveLocation, `${token.name} - Burned 30d.png`);
+  
+  try {
+    if (fs.existsSync(filePath)) {
+      const stats = fs.statSync(filePath);
+      const now = new Date();
+      const fileAgeInMinutes = (now - stats.mtime) / 1000 / 60;
+
+      if (fileAgeInMinutes < cacheLifetime) {
+        await ctx.replyWithPhoto(new InputFile(filePath));
+        console.log('Chart sent from cache');
+        return;
+      }
+    }
+
+    generateBurnedChart(`${token.name} - Burned 30d`, token, isHourly = false, ticks = 'day')
+    
+    const newFilePath = await generateBurnedChart(`${token.name} - Burned 30d`, token, isHourly = false, ticks = 'day');
+    await ctx.replyWithPhoto(new InputFile(newFilePath));
+    } catch (error) {
+      console.error('Error generating chart:', error);
+      await ctx.reply('Sorry, there was an error generating the chart.');
+    }
+});
+
+// Command handler for /price
+bot.command('burned', async (ctx) => {
+  console.log('Chat ID: ', ctx.chat.id);
+  try {
+    const token = getToken('price', ctx.chat.id);
+    if (!token) {
+      await ctx.reply('Sorry, no token found for this chat.');
+      return;
+    }
+    
+    let burned, usdValue;
+    try {
+      [burned, usdValue] = await Promise.all([
+        getTotalBurned(token),
+        getUSDPrice(token)
+      ]);
+
+      console.log(`Burned: ${burned}`);
+      console.log(`$USD Value: ${usdValue}`);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      throw error;
+    }
+
+    // Calculate the USD value of the burned tokens
+    const usdValueBurned = burned * usdValue;
+
+    // const message = `Burned: ${burned}\n$USD Value: ${usdValue}`;
+    // const message = `⠀⢠⡀⠀\n⢀⣿⣿⡄  Burn Stats\n⢸⡿⢹⣿  XUSD: ${escapeMarkdownV2(burned.toFixed(0))}\n⠈⢧⢠⠏  USD:  ${escapeMarkdownV2(usdValueBurned.toFixed(0))}`;
+    const message = `
+    \`\`\`
+⠀⢠⡀⠀\n⢀⣿⣿⡄  Burn Stats\n⢸⡿⢹⣿  XUSD: ${escapeMarkdownV2(burned.toFixed(0))}\n⠈⢧⢠⠏  USD:  ${escapeMarkdownV2(usdValueBurned.toFixed(0))} 
+    \`\`\`
+    `;
+
+
+
+    console.log('Payload:', message); // Log the payload
+    await ctx.reply(message, { parse_mode: 'MarkdownV2' });
+  } catch (error) {
+    console.error('Error fetching data for blocks:', error);
+    await ctx.reply('Sorry, there was an error fetching the price data.');
+  }
+});
+
 
 
 // bot.command('supply', async (ctx) => {
