@@ -1,3 +1,0 @@
-fonts.fonts = with pkgs; [
-  (nerdfonts.override { fonts = [ "RobotoMonoNerdFont-Regular" ]; })
-];
