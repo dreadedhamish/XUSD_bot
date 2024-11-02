@@ -1,3 +1,2 @@
-fonts.packages = with pkgs; [
-  noto-fonts
-];
+[fonts]
+packages = ["noto-fonts"]
