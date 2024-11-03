@@ -6,8 +6,8 @@ packages = ["fontconfig", "freetype", "fontconfig-config"]
 
 [phases.setup]
 commands = [
-  "mkdir -p /etc/fonts",
-  "cp -r /nix/store/*-fontconfig-*/etc/fonts/* /etc/fonts/"
+  "mkdir -p /etc/fonts/conf.d",
+  "echo '<?xml version=\"1.0\"?>\n<!DOCTYPE fontconfig SYSTEM \"fonts.dtd\">\n<fontconfig>\n  <dir>/nix/store/*-noto-fonts-*/share/fonts</dir>\n</fontconfig>' > /etc/fonts/fonts.conf"
 ]
 
 [env]
