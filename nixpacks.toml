@@ -2,7 +2,13 @@
 packages = ["noto-fonts"]
 
 [build]
-packages = ["fontconfig"]
+packages = ["fontconfig", "freetype", "fontconfig-config"]
+
+[phases.setup]
+commands = [
+  "mkdir -p /etc/fonts",
+  "cp -r /nix/store/*-fontconfig-*/etc/fonts/* /etc/fonts/"
+]
 
 [env]
 FONTCONFIG_PATH = "/etc/fonts"
