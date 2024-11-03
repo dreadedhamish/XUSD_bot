@@ -1,4 +1,4 @@
-FROM node:18.1-alpine as appbuild
+FROM node:22-alpine as appbuild
 
 WORKDIR /app
 COPY package*.json ./
@@ -6,7 +6,7 @@ RUN npm ci --omit=dev
 COPY . .
 RUN npm run build
 
-FROM node:18.1-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 COPY package*.json ./

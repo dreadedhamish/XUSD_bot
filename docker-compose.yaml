@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
     bot:
-        container_name: EDIT_ME
+        container_name: grammy1
         build:
             context: .
             dockerfile: Dockerfile
