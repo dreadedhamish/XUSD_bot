@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Ensure fontconfig binaries are in the PATH
+export PATH=$PATH:/nix/store/*-fontconfig-*/bin
+
 mkdir -p /etc/fonts/conf.d
 cat <<EOT > /etc/fonts/fonts.conf
 <?xml version="1.0"?>
