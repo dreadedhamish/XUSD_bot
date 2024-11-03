@@ -6,7 +6,7 @@ const { limit } = require("@grammyjs/ratelimiter");
 const fs = require('fs');
 const path = require('path');
 
-// const { subscribe } = require('./events-web3-2');
+const { subscribe } = require('./events-web3-2');
 
 // Debugging statements
 console.log('BOT_TOKEN:', process.env.BOT_TOKEN);
@@ -77,19 +77,23 @@ function getToken(command, chatID) {
     console.log("Command isn't a string!")
     return null;
   }
-  if (command.startsWith('/1d_') || command.startsWith('/7d_') || command.startsWith('/30d_')) {
-    const tokenName = command.split('_')[1].toUpperCase();
-    const token = tokens.find(t => t.name === tokenName);
-    return token || tokens[1]; // Return tokens[1] if no token is found
-  } else if (command === '/1d' || command === '/7d' || command === '/30d') {
-    const token = tokens.find(t => t.chatID === chatID.toString());
-    return token || tokens[1]; // Return tokens[1] if no token is found
+  // if (command.startsWith('/1d_') || command.startsWith('/7d_') || command.startsWith('/30d_')) {
+  //   const tokenName = command.split('_')[1].toUpperCase();
+  //   const token = tokens.find(t => t.name === tokenName);
+  //   return token || tokens[1]; // Return tokens[1] if no token is found
+  // } else if (command === '/1d' || command === '/7d' || command === '/30d') {
+  //   const token = tokens.find(t => t.chatID === chatID.toString());
+  //   return token || tokens[1]; // Return tokens[1] if no token is found
+  // }
+
+  const token = tokens.find(t => t.chatID === chatID.toString());
+
+  if (!token) {
+    console.log('Unknown chatID - using XUSD');
+    return tokens[1]; // Return tokens[1] if no token is found
   }
-
-  console.log('Unknown chatID - using XUSD')
-  return tokens[1];
-
-  return null;
+  
+  return token;
 }
 
 // Command handler for /price
@@ -149,7 +153,7 @@ bot.command('1d', async (ctx) => {
     }
   `;
 
-  const filePath = path.join(saveLocation, `${token.name} - 1d.png`);
+  const filePath = path.join(saveLocation, `${token.name}-1d.png`);
 
   try {
     if (fs.existsSync(filePath)) {
@@ -164,7 +168,7 @@ bot.command('1d', async (ctx) => {
       }
     }
 
-    const newFilePath = await generatePriceChart(query, `${token.name} - 1d`, token, true);
+    const newFilePath = await generatePriceChart(query, `${token.name}-1d`, token, true);
     await ctx.replyWithPhoto(new InputFile(newFilePath));
     console.log('Chart freshly generated');
   } catch (error) {
@@ -213,7 +217,7 @@ bot.command('7d', async (ctx) => {
     }
   `;
 
-  const filePath = path.join(saveLocation, `${token.name} - 7d.png`);
+  const filePath = path.join(saveLocation, `${token.name}-7d.png`);
 
   try {
     if (fs.existsSync(filePath)) {
@@ -228,7 +232,7 @@ bot.command('7d', async (ctx) => {
       }
     }
 
-    const newFilePath = await generatePriceChart(query, `${token.name} - 7d`, token, true, 'day');
+    const newFilePath = await generatePriceChart(query, `${token.name}-7d`, token, true, 'day');
     await ctx.replyWithPhoto(new InputFile(newFilePath));
     console.log('Chart freshly generated');
   } catch (error) {
@@ -266,7 +270,7 @@ bot.command('30d', async (ctx) => {
     }
   `;
 
-  const filePath = path.join(saveLocation, `${token.name} - 30d.png`);
+  const filePath = path.join(saveLocation, `${token.name}-30d.png`);
 
   try {
     if (fs.existsSync(filePath)) {
@@ -281,7 +285,7 @@ bot.command('30d', async (ctx) => {
       }
     }
 
-    const newFilePath = await generatePriceChart(query, `${token.name} - 30d`, token, false);
+    const newFilePath = await generatePriceChart(query, `${token.name}-30d`, token, false);
     await ctx.replyWithPhoto(new InputFile(newFilePath));
   } catch (error) {
     console.error('Error generating chart:', error);
@@ -298,7 +302,7 @@ bot.command('burned_chart', async (ctx) => {
     return;
   }
   
-  const filePath = path.join(saveLocation, `${token.name} - Burned 30d.png`);
+  const filePath = path.join(saveLocation, `${token.name}-Burned 30d.png`);
   
   try {
     if (fs.existsSync(filePath)) {
@@ -315,7 +319,7 @@ bot.command('burned_chart', async (ctx) => {
 
     // generateBurnedChart(`${token.name} - Burned 30d`, token, isHourly = false, ticks = 'day')
     
-    const newFilePath = await generateBurnedChart(`${token.name} - Burned 30d`, token, isHourly = false, ticks = 'day');
+    const newFilePath = await generateBurnedChart(`${token.name}-Burned 30d`, token, isHourly = false, ticks = 'day');
     await ctx.replyWithPhoto(new InputFile(newFilePath));
     } catch (error) {
       console.error('Error generating chart:', error);
@@ -379,7 +383,7 @@ bot.command('supply', async (ctx) => {
     return;
   }
   
-  const filePath = path.join(saveLocation, `${token.name} - Total Supply.png`);
+  const filePath = path.join(saveLocation, `${token.name}-Total Supply.png`);
   
   try {
     if (fs.existsSync(filePath)) {
@@ -396,7 +400,7 @@ bot.command('supply', async (ctx) => {
 
     // generateSupplyChart(`${token.name} - Total Supply`, token, isHourly = false, ticks = 'day')
     
-    const newFilePath = await generateSupplyChart(`${token.name} - Total Supply`, token, isHourly = false, ticks = 'day');
+    const newFilePath = await generateSupplyChart(`${token.name}-Total Supply`, token, isHourly = false, ticks = 'day');
     await ctx.replyWithPhoto(new InputFile(newFilePath));
     } catch (error) {
       console.error('Error generating chart:', error);
@@ -404,39 +408,39 @@ bot.command('supply', async (ctx) => {
     }
 });
 
-bot.command('holders', async (ctx) => {
-  const command = ctx.message.text.split(' ')[0];
-  console.log('Received command:', command, ctx.chat.id);
-  const token = getToken(command, ctx.chat.id);
-  if (!token) {
-    await ctx.reply('Sorry, no token found for this command.');
-    return;
-  }
+// bot.command('holders', async (ctx) => {
+//   const command = ctx.message.text.split(' ')[0];
+//   console.log('Received command:', command, ctx.chat.id);
+//   const token = getToken(command, ctx.chat.id);
+//   if (!token) {
+//     await ctx.reply('Sorry, no token found for this command.');
+//     return;
+//   }
   
-  const filePath = path.join(saveLocation, `${token.name} - Holders.png`);
+//   const filePath = path.join(saveLocation, `${token.name}-Holders.png`);
   
-  try {
-    if (fs.existsSync(filePath)) {
-      const stats = fs.statSync(filePath);
-      const now = new Date();
-      const fileAgeInMinutes = (now - stats.mtime) / 1000 / 60;
+//   try {
+//     if (fs.existsSync(filePath)) {
+//       const stats = fs.statSync(filePath);
+//       const now = new Date();
+//       const fileAgeInMinutes = (now - stats.mtime) / 1000 / 60;
 
-      if (fileAgeInMinutes < cacheLifetime) {
-        await ctx.replyWithPhoto(new InputFile(filePath));
-        console.log('Chart sent from cache');
-        return;
-      }
-    }
+//       if (fileAgeInMinutes < cacheLifetime) {
+//         await ctx.replyWithPhoto(new InputFile(filePath));
+//         console.log('Chart sent from cache');
+//         return;
+//       }
+//     }
 
-    // generateSupplyChart(`${token.name} - Total Supply`, token, isHourly = false, ticks = 'day')
+//     // generateSupplyChart(`${token.name} - Total Supply`, token, isHourly = false, ticks = 'day')
     
-    const newFilePath = await generateHoldersChart(`${token.name} - Holders`, token, isHourly = false, ticks = 'day');
-    await ctx.replyWithPhoto(new InputFile(newFilePath));
-    } catch (error) {
-      console.error('Error generating chart:', error);
-      await ctx.reply('Sorry, there was an error generating the chart.');
-    }
-});
+//     const newFilePath = await generateHoldersChart(`${token.name}-Holders`, token, isHourly = false, ticks = 'day');
+//     await ctx.replyWithPhoto(new InputFile(newFilePath));
+//     } catch (error) {
+//       console.error('Error generating chart:', error);
+//       await ctx.reply('Sorry, there was an error generating the chart.');
+//     }
+// });
 
 
 bot.start();

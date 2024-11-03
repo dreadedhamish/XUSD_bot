@@ -1,2 +1,8 @@
 [fonts]
 packages = ["noto-fonts"]
+
+[build]
+packages = ["fontconfig"]
+
+[env]
+FONTCONFIG_PATH = "/etc/fonts"
