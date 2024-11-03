@@ -6,5 +6,10 @@ cat <<EOT > /etc/fonts/fonts.conf
 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
 <fontconfig>
   <dir>/nix/store/*-noto-fonts-*/share/fonts</dir>
+  <cachedir>/var/cache/fontconfig</cachedir>
+  <configdir>/etc/fonts/conf.d</configdir>
 </fontconfig>
 EOT
+
+# Update the font cache
+fc-cache -f -v
