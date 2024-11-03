@@ -302,7 +302,7 @@ bot.command('burned_chart', async (ctx) => {
     return;
   }
   
-  const filePath = path.join(saveLocation, `${token.name}-Burned 30d.png`);
+  const filePath = path.join(saveLocation, `${token.name}-Burned-30d.png`);
   
   try {
     if (fs.existsSync(filePath)) {
@@ -319,7 +319,7 @@ bot.command('burned_chart', async (ctx) => {
 
     // generateBurnedChart(`${token.name} - Burned 30d`, token, isHourly = false, ticks = 'day')
     
-    const newFilePath = await generateBurnedChart(`${token.name}-Burned 30d`, token, isHourly = false, ticks = 'day');
+    const newFilePath = await generateBurnedChart(`${token.name}-Burned-30d`, token, isHourly = false, ticks = 'day');
     await ctx.replyWithPhoto(new InputFile(newFilePath));
     } catch (error) {
       console.error('Error generating chart:', error);
@@ -383,7 +383,7 @@ bot.command('supply', async (ctx) => {
     return;
   }
   
-  const filePath = path.join(saveLocation, `${token.name}-Total Supply.png`);
+  const filePath = path.join(saveLocation, `${token.name}-Total-Supply.png`);
   
   try {
     if (fs.existsSync(filePath)) {
@@ -400,7 +400,7 @@ bot.command('supply', async (ctx) => {
 
     // generateSupplyChart(`${token.name} - Total Supply`, token, isHourly = false, ticks = 'day')
     
-    const newFilePath = await generateSupplyChart(`${token.name}-Total Supply`, token, isHourly = false, ticks = 'day');
+    const newFilePath = await generateSupplyChart(`${token.name}-Total-Supply`, token, isHourly = false, ticks = 'day');
     await ctx.replyWithPhoto(new InputFile(newFilePath));
     } catch (error) {
       console.error('Error generating chart:', error);
