@@ -2,3 +2,6 @@
 
 [phases.setup]
 nixPkgs = ["...",  "noto-fonts", "fontconfig", "freetype"]
+cmds = [
+  "sh setup-fontconfig.sh"
+]
