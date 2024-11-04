@@ -17,5 +17,5 @@ export PATH=$PATH:$FONTCONFIG_BIN
 # </fontconfig>
 # EOT
 
-# # Update the font cache
-# fc-cache -f -v
+# Update the font cache
+fc-cache -f -v
