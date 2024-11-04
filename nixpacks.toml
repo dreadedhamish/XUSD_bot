@@ -3,5 +3,6 @@
 [phases.setup]
 nixPkgs = ["...", "fontconfig", "freetype"]
 cmds = [
-  "fc-cache -f -v"
+  "mkdir -p /etc/fonts/conf.d",
+  "sh setup-fontconfig.sh"
 ]
