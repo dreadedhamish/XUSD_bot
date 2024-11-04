@@ -1,14 +1,17 @@
-[fonts]
-packages = ["noto-fonts"]
-
-[build]
-packages = ["fontconfig", "freetype", "fontconfig-config"]
+# nixpacks.toml
 
 [phases.setup]
-commands = [
+nixPkgs = ["noto-fonts", "fontconfig", "freetype", "fontconfig-config"]
+cmds = [
   "mkdir -p /etc/fonts/conf.d",
   "sh setup-fontconfig.sh"
 ]
+
+[phases.build]
+cmds = ["npm ci --omit=dev"]
+
+[start]
+cmd = "npm start"
 
 [env]
 FONTCONFIG_PATH = "/etc/fonts"
