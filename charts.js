@@ -187,7 +187,7 @@ async function generatePriceChart(
           position: "left",
           title: {
             display: true,
-            text: "Daily Volume (USD)",
+            text: "Volume (USD)",
             color: colour,
           },
           ticks: {
