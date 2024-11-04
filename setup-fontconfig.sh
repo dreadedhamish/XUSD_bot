@@ -1,10 +1,10 @@
 #!/bin/sh
 
 # Find the path to the fontconfig binaries
-FONTCONFIG_BIN=$(find /nix/store -name fc-cache | head -n 1 | xargs dirname)
+# FONTCONFIG_BIN=$(find /nix/store -name fc-cache | head -n 1 | xargs dirname)
 
-# Ensure fontconfig binaries are in the PATH
-export PATH=$PATH:$FONTCONFIG_BIN
+# # Ensure fontconfig binaries are in the PATH
+# export PATH=$PATH:$FONTCONFIG_BIN
 
 # mkdir -p /etc/fonts/conf.d
 # cat <<EOT > /etc/fonts/fonts.conf

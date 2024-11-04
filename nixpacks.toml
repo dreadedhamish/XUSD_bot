@@ -2,13 +2,6 @@
 
 [phases.setup]
 nixPkgs = ["...", "noto-fonts", "fontconfig", "freetype"]
-cmds = [
-  "mkdir -p /etc/fonts/conf.d",
-  "sh setup-fontconfig.sh"
-]
-
-[env]
-FONTCONFIG_PATH = "/etc/fonts"
 
 
 
