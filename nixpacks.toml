@@ -1,4 +1,4 @@
 # nixpacks.toml
 
 [phases.setup]
-nixPkgs = ["...", "freetype"]
+nixPkgs = ["...", "fontconfig", "freetype"]
