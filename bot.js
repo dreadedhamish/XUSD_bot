@@ -551,10 +551,10 @@ bot.command('supply', async (ctx) => {
 
 // Call the subscribe function to start listening for events
 
-subscribe(bot).then(() => {
-  console.log('Subscribed to events successfully.');
-}).catch((error) => {
-  console.error('Error subscribing to events:', error);
-});
+// subscribe(bot).then(() => {
+//   console.log('Subscribed to events successfully.');
+// }).catch((error) => {
+//   console.error('Error subscribing to events:', error);
+// });
 
 bot.start();
