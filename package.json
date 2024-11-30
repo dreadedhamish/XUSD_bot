@@ -7,6 +7,7 @@
     "start": "node bot.js"
   },
   "dependencies": {
+    "@grammyjs/auto-retry": "^2.0.2",
     "@grammyjs/ratelimiter": "^1.2.0",
     "axios": "^1.7.7",
     "axios-cache-interceptor": "^1.6.0",

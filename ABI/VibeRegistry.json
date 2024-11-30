@@ -1,466 +1,727 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_accessControl",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_xusd",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
+      "inputs": [
+          {
+              "internalType": "address",
+              "name": "_accessControl",
+              "type": "address"
+          },
+          {
+              "internalType": "address",
+              "name": "_storage",
+              "type": "address"
+          },
+          {
+              "internalType": "address",
+              "name": "_mafths",
+              "type": "address"
+          },
+          {
+              "internalType": "address",
+              "name": "_xusd",
+              "type": "address"
+          },
+          {
+              "internalType": "address",
+              "name": "_tRewards",
+              "type": "address"
+          }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
   },
   {
-    "inputs": [],
-    "name": "NotAllowedAccess",
-    "type": "error"
+      "inputs": [],
+      "name": "NotAllowedAccess",
+      "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "enum AuthLib.Rank",
-        "name": "roleId",
-        "type": "uint8"
-      },
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "UnauthorizedAccess",
-    "type": "error"
+      "inputs": [
+          {
+              "internalType": "enum AuthLib.Rank",
+              "name": "roleId",
+              "type": "uint8"
+          },
+          {
+              "internalType": "address",
+              "name": "addr",
+              "type": "address"
+          }
+      ],
+      "name": "UnauthorizedAccess",
+      "type": "error"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "classAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "classType",
-        "type": "uint256"
-      }
-    ],
-    "name": "ClassAdded",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "classAddress",
+              "type": "address"
+          },
+          {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "classType",
+              "type": "uint256"
+          },
+          {
+              "indexed": false,
+              "internalType": "string",
+              "name": "description",
+              "type": "string"
+          }
+      ],
+      "name": "ClassAdded",
+      "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "classAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "classType",
-        "type": "uint256"
-      }
-    ],
-    "name": "ClassDeactivated",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "classAddress",
+              "type": "address"
+          },
+          {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "classType",
+              "type": "uint256"
+          }
+      ],
+      "name": "ClassRemoved",
+      "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newLimit",
-        "type": "uint256"
-      }
-    ],
-    "name": "ClassLimitUpdated",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "contractWhite",
+              "type": "address"
+          }
+      ],
+      "name": "ContractRemovedFromWhitelistFrom",
+      "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "classAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "classType",
-        "type": "uint256"
-      }
-    ],
-    "name": "ClassRemoved",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "contractWhite",
+              "type": "address"
+          }
+      ],
+      "name": "ContractRemovedFromWhitelistTo",
+      "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "classAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "Omnicron",
-        "type": "uint256"
-      }
-    ],
-    "name": "MasterClassErrorLogged",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "contractWhite",
+              "type": "address"
+          }
+      ],
+      "name": "ContractWhitelistedFrom",
+      "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "classAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "int256",
-        "name": "vibes",
-        "type": "int256"
-      }
-    ],
-    "name": "MasterClassVibesUpdated",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "contractWhite",
+              "type": "address"
+          }
+      ],
+      "name": "ContractWhitelistedTo",
+      "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "classAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "reason",
-        "type": "bytes"
-      }
-    ],
-    "name": "RewardsCalculated",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "uint64",
+              "name": "userAura",
+              "type": "uint64"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "blockNumber",
+              "type": "uint256"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "tradeCount",
+              "type": "uint256"
+          }
+      ],
+      "name": "NewBlockProcessed",
+      "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "classHash",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "reason",
-        "type": "bytes"
-      }
-    ],
-    "name": "RewardsCalculationFailed",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint64",
+              "name": "aura",
+              "type": "uint64"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "rewards",
+              "type": "uint256"
+          }
+      ],
+      "name": "RewardsCalculated",
+      "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "classAddress",
-        "type": "address"
-      }
-    ],
-    "name": "VibeUserActivated",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "classHash",
+              "type": "address"
+          },
+          {
+              "indexed": false,
+              "internalType": "bytes",
+              "name": "reason",
+              "type": "bytes"
+          }
+      ],
+      "name": "RewardsCalculationFailed",
+      "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "classAddress",
-        "type": "address"
-      }
-    ],
-    "name": "VibeUserDeactivated",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "minTaxBps",
+              "type": "uint256"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "maxTaxBps",
+              "type": "uint256"
+          }
+      ],
+      "name": "TaxParametersUpdated",
+      "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "int256",
-        "name": "vibes",
-        "type": "int256"
-      }
-    ],
-    "name": "VibesCalculated",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newRewardsContract",
+              "type": "address"
+          }
+      ],
+      "name": "TradingRewardsSet",
+      "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "contractAddress",
-        "type": "address"
-      }
-    ],
-    "name": "WhitelistedContractAdded",
-    "type": "event"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+          },
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint64",
+              "name": "userAura",
+              "type": "uint64"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "currentBlock",
+              "type": "uint256"
+          }
+      ],
+      "name": "TransactionRecorded",
+      "type": "event"
   },
   {
-    "inputs": [],
-    "name": "MotzkinPrime",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "",
-        "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "classAddress",
+              "type": "address"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "classType",
+              "type": "uint256"
+          }
+      ],
+      "name": "VibeClassRemoved",
+      "type": "event"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "class",
-        "type": "address"
-      }
-    ],
-    "name": "activateVibeUser",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint64",
+              "name": "aura",
+              "type": "uint64"
+          },
+          {
+              "indexed": false,
+              "internalType": "int256",
+              "name": "vibes",
+              "type": "int256"
+          }
+      ],
+      "name": "VibesCalculated",
+      "type": "event"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "class",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "classType",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "_process",
-        "type": "bool"
-      }
-    ],
-    "name": "addClass",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "classHash",
+              "type": "address"
+          },
+          {
+              "indexed": false,
+              "internalType": "bytes",
+              "name": "reason",
+              "type": "bytes"
+          }
+      ],
+      "name": "VibesCalculationFailed",
+      "type": "event"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_caller",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "calculateAndSumBasis",
-    "outputs": [
-      {
-        "internalType": "int256",
-        "name": "",
-        "type": "int256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+      "inputs": [],
+      "name": "BASIS_POINTS",
+      "outputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      }
-    ],
-    "name": "calculateCurrentVibe",
-    "outputs": [
-      {
-        "internalType": "int256",
-        "name": "",
-        "type": "int256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+      "inputs": [
+          {
+              "internalType": "address",
+              "name": "_contract",
+              "type": "address"
+          }
+      ],
+      "name": "SetTradingRewards",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "class",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "classType",
-        "type": "uint256"
-      }
-    ],
-    "name": "deactivateVibe",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+      "inputs": [
+          {
+              "internalType": "address",
+              "name": "_to",
+              "type": "address"
+          },
+          {
+              "internalType": "address",
+              "name": "_from",
+              "type": "address"
+          },
+          {
+              "internalType": "address",
+              "name": "_caller",
+              "type": "address"
+          },
+          {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address"
+          },
+          {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+          }
+      ],
+      "name": "calculateAndSumBasis",
+      "outputs": [
+          {
+              "internalType": "int256",
+              "name": "",
+              "type": "int256"
+          },
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "class",
-        "type": "address"
-      }
-    ],
-    "name": "deactivateVibeUser",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+      "inputs": [
+          {
+              "internalType": "uint256",
+              "name": "_good",
+              "type": "uint256"
+          },
+          {
+              "internalType": "uint256",
+              "name": "_bad",
+              "type": "uint256"
+          }
+      ],
+      "name": "changeGoodBad",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "limit",
-        "type": "uint256"
-      }
-    ],
-    "name": "setClassLimit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+      "inputs": [
+          {
+              "internalType": "address",
+              "name": "_storage",
+              "type": "address"
+          }
+      ],
+      "name": "changeStorage",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "contractWhite",
-        "type": "address"
-      }
-    ],
-    "name": "setWhitelistedContract",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+      "inputs": [],
+      "name": "keeperClassCount",
+      "outputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      }
-    ],
-    "name": "viewVibes",
-    "outputs": [
-      {
-        "internalType": "int256",
-        "name": "",
-        "type": "int256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+      "inputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "name": "kepperClass",
+      "outputs": [
+          {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
   },
   {
-    "inputs": [],
-    "name": "xusd",
-    "outputs": [
-      {
-        "internalType": "contract XUSD",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+      "inputs": [
+          {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+          }
+      ],
+      "name": "lastProcessedBlockI",
+      "outputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },
+  {
+      "inputs": [],
+      "name": "mafths",
+      "outputs": [
+          {
+              "internalType": "contract IVMREQ2",
+              "name": "",
+              "type": "address"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },
+  {
+      "inputs": [],
+      "name": "maxTaxBps",
+      "outputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },
+  {
+      "inputs": [],
+      "name": "minTaxBps",
+      "outputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },
+  {
+      "inputs": [],
+      "name": "processClassCount",
+      "outputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },
+  {
+      "inputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "name": "processVibeClass",
+      "outputs": [
+          {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },
+  {
+      "inputs": [
+          {
+              "internalType": "address",
+              "name": "contractWhite",
+              "type": "address"
+          }
+      ],
+      "name": "removeWhitelistedContractFrom",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+  },
+  {
+      "inputs": [
+          {
+              "internalType": "address",
+              "name": "contractWhite",
+              "type": "address"
+          }
+      ],
+      "name": "removeWhitelistedContractTo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+  },
+  {
+      "inputs": [],
+      "name": "rewardClassCount",
+      "outputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },
+  {
+      "inputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "name": "rewardVibeClass",
+      "outputs": [
+          {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },
+  {
+      "inputs": [
+          {
+              "internalType": "address",
+              "name": "contractWhite",
+              "type": "address"
+          }
+      ],
+      "name": "setWhitelistedContractFrom",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+  },
+  {
+      "inputs": [
+          {
+              "internalType": "address",
+              "name": "contractWhite",
+              "type": "address"
+          }
+      ],
+      "name": "setWhitelistedContractTo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+  },
+  {
+      "inputs": [],
+      "name": "singleClassCount",
+      "outputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },
+  {
+      "inputs": [
+          {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+          }
+      ],
+      "name": "singleVibeClass",
+      "outputs": [
+          {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },
+  {
+      "inputs": [
+          {
+              "internalType": "uint256",
+              "name": "_minTaxBps",
+              "type": "uint256"
+          },
+          {
+              "internalType": "uint256",
+              "name": "_maxTaxBps",
+              "type": "uint256"
+          }
+      ],
+      "name": "updateTaxParameters",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+  },
+  {
+      "inputs": [
+          {
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+          }
+      ],
+      "name": "viewVibes",
+      "outputs": [
+          {
+              "internalType": "int256",
+              "name": "",
+              "type": "int256"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
   }
 ]

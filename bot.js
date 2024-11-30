@@ -3,10 +3,11 @@ require('dotenv').config();
 const { Bot, InputFile } = require("grammy");
 const { ignoreOld } = require("grammy-middlewares");
 const { limit } = require("@grammyjs/ratelimiter");
+const { autoRetry } = require("@grammyjs/auto-retry");
 const fs = require('fs');
 const path = require('path');
 
-const { subscribe } = require('./events-web3-2');
+// const { subscribe } = require('./events-web3-2');
 
 // Debugging statements
 console.log('BOT_TOKEN:', process.env.BOT_TOKEN);
@@ -17,6 +18,12 @@ const bot = new Bot(process.env.BOT_TOKEN); // Use environment variable for toke
 bot.use(limit());
 
 bot.use(ignoreOld());
+
+bot.api.config.use(autoRetry());
+autoRetry({
+  maxRetryAttempts: 1, // only repeat requests once
+  maxDelaySeconds: 10, // 5 - fail immediately if we have to wait >5 seconds
+});
 
 // new_bot.js
 const graphEndpoint = "https://graph.pulsechain.com/subgraphs/name/pulsechain/pulsexv2";
@@ -38,13 +45,14 @@ const { fetchPriceMultiBlock, formatPriceChangesMessage } = require('./price');
 const { generatePriceChart, generateSupplyChart, generateBurnedChart } = require('./charts');
 
 // Import helpers
-const { getTotalBurned, getUSDPrice, escapeMarkdownV2 } = require('./helpers');
+const { getTotalBurned, getUSDPrice, escapeMarkdownV2, getIpfsGateway, generateContractMessage } = require('./helpers');
 
 // Define contract addresses and main pairs
 // Non-checksummed addresses only
 const tokens = [
   {
-    name: '1SWAP',
+    name: 'OneSwap',
+    symbol: '1SWAP',
     contractAddress: '0xeb14f3192a37ad2501f3bf6627c565e6799ad661',
     mainPair: '0x246766d81bad75bca1d9189fc0d90ced7f057b15',
     position: 'token1',
@@ -57,7 +65,8 @@ const tokens = [
 ⠀⠛⠧⣄⣀⡌⠔⠁  Layer`
   },
   {
-    name: 'XUSD',
+    name: 'XUSD Vibratile Asset',
+    symbol: 'XUSD',
     contractAddress: '0xbbea78397d4d4590882efcc4820f03074ab2ab29',
     mainPair: '0xeb5c0c2f096604a62585ee378f664fbf6620b5a5',
     position: 'token1',
@@ -95,6 +104,104 @@ function getToken(command, chatID) {
   
   return token;
 }
+
+// Command handler for /contract
+bot.command('contract', async (ctx) => {
+  console.log('Chat ID: ', ctx.chat.id);
+  try {
+    const token = getToken('contract', ctx.chat.id);
+    if (!token) {
+      await ctx.reply('Sorry, no token found for this chat.');
+      return;
+    }
+    
+    const message = await generateContractMessage(token);
+    
+    console.log('Payload:', message); // Log the payload
+    
+    await ctx.reply(message, {
+      parse_mode: 'MarkdownV2',
+      disable_web_page_preview: true
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    await ctx.reply('Sorry, there was an error fetching the IPFS gateway.');
+  }
+});
+
+bot.command('xusdcontract', async (ctx) => {
+  console.log('Chat ID: ', ctx.chat.id);
+  try {  
+    const message = await generateContractMessage(tokens[1]);
+    console.log('Payload before escaping:', message); // Log the payload before escaping
+    
+    await ctx.reply(message, {
+      parse_mode: 'MarkdownV2',
+      disable_web_page_preview: true
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    await ctx.reply('Sorry, there was an error.');
+  }
+});
+
+bot.command('1swapcontract', async (ctx) => {
+  console.log('Chat ID: ', ctx.chat.id);
+  try {  
+    const message = await generateContractMessage(tokens[0]);
+    console.log('Payload before escaping:', message); // Log the payload before escaping
+    
+    await ctx.reply(message, {
+      parse_mode: 'MarkdownV2',
+      disable_web_page_preview: true
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    await ctx.reply('Sorry, there was an error.');
+  }
+});
+
+// bot.command('contract', async (ctx) => {
+//   console.log('Chat ID: ', ctx.chat.id);
+//   try {
+//     const token = getToken('contract', ctx.chat.id);
+//     if (!token) {
+//       await ctx.reply('Sorry, no token found for this chat.');
+//       return;
+//     }
+    
+//     const ipfsGateway = await getIpfsGateway();
+//     console.log('IPFS Gateway:', ipfsGateway);
+//     const ipfsGatewayUrl = ipfsGateway + "/#/?outputCurrency=" + token.contractAddress;
+    
+//     // Format the message to include token.symbol, token.contractAddress, and the concatenated URL
+//     const message = `
+// \`\`\`
+
+// ${token.flair}
+
+// Name: ${token.name}
+// Symbol: ${token.symbol}
+// ⠀
+// \`\`\`
+// Contract Address: \`${token.contractAddress}\`
+
+// [Scan](https://scan.pulsechain.com/address/${token.contractAddress})   \\|   [Contract](https://scan.pulsechain.com/address/${token.contractAddress}?tab=contract)
+// [Dexscreener](https://dexscreener.com/pulsechain/${token.mainPair})  \\|  [Dextools](https://www.dextools.io/app/en/pulse/pair-explorer/${token.mainPair})
+// [PulseX Buy Link](${ipfsGatewayUrl})
+//     `;
+    
+//     console.log('Payload:', message); // Log the payload
+    
+//     await ctx.reply(message, {
+//       parse_mode: 'MarkdownV2',
+//       disable_web_page_preview: true
+//     });
+//   } catch (error) {
+//     console.error('Error:', error);
+//     await ctx.reply('Sorry, there was an error fetching the IPFS gateway.');
+//   }
+// });
 
 // Command handler for /price
 bot.command('price', async (ctx) => {
@@ -153,7 +260,7 @@ bot.command('1d', async (ctx) => {
     }
   `;
 
-  const filePath = path.join(saveLocation, `${token.name}-1d.png`);
+  const filePath = path.join(saveLocation, `${token.symbol}-1d.png`);
 
   try {
     if (fs.existsSync(filePath)) {
@@ -168,7 +275,7 @@ bot.command('1d', async (ctx) => {
       }
     }
 
-    const newFilePath = await generatePriceChart(query, `${token.name}-1d`, token, true);
+    const newFilePath = await generatePriceChart(query, `${token.symbol}-1d`, token, true);
     await ctx.replyWithPhoto(new InputFile(newFilePath));
     console.log('Chart freshly generated');
   } catch (error) {
@@ -217,7 +324,7 @@ bot.command('7d', async (ctx) => {
     }
   `;
 
-  const filePath = path.join(saveLocation, `${token.name}-7d.png`);
+  const filePath = path.join(saveLocation, `${token.symbol}-7d.png`);
 
   try {
     if (fs.existsSync(filePath)) {
@@ -232,7 +339,7 @@ bot.command('7d', async (ctx) => {
       }
     }
 
-    const newFilePath = await generatePriceChart(query, `${token.name}-7d`, token, true, 'day');
+    const newFilePath = await generatePriceChart(query, `${token.symbol}-7d`, token, true, 'day');
     await ctx.replyWithPhoto(new InputFile(newFilePath));
     console.log('Chart freshly generated');
   } catch (error) {
@@ -270,7 +377,7 @@ bot.command('30d', async (ctx) => {
     }
   `;
 
-  const filePath = path.join(saveLocation, `${token.name}-30d.png`);
+  const filePath = path.join(saveLocation, `${token.symbol}-30d.png`);
 
   try {
     if (fs.existsSync(filePath)) {
@@ -285,7 +392,7 @@ bot.command('30d', async (ctx) => {
       }
     }
 
-    const newFilePath = await generatePriceChart(query, `${token.name}-30d`, token, false);
+    const newFilePath = await generatePriceChart(query, `${token.symbol}-30d`, token, false);
     await ctx.replyWithPhoto(new InputFile(newFilePath));
   } catch (error) {
     console.error('Error generating chart:', error);
@@ -302,7 +409,7 @@ bot.command('burned_chart', async (ctx) => {
     return;
   }
   
-  const filePath = path.join(saveLocation, `${token.name}-Burned-30d.png`);
+  const filePath = path.join(saveLocation, `${token.symbol}-Burned-30d.png`);
   
   try {
     if (fs.existsSync(filePath)) {
@@ -317,9 +424,9 @@ bot.command('burned_chart', async (ctx) => {
       }
     }
 
-    // generateBurnedChart(`${token.name} - Burned 30d`, token, isHourly = false, ticks = 'day')
+    // generateBurnedChart(`${token.symbol} - Burned 30d`, token, isHourly = false, ticks = 'day')
     
-    const newFilePath = await generateBurnedChart(`${token.name}-Burned-30d`, token, isHourly = false, ticks = 'day');
+    const newFilePath = await generateBurnedChart(`${token.symbol}-Burned-30d`, token, isHourly = false, ticks = 'day');
     await ctx.replyWithPhoto(new InputFile(newFilePath));
     } catch (error) {
       console.error('Error generating chart:', error);
@@ -383,7 +490,7 @@ bot.command('supply', async (ctx) => {
     return;
   }
   
-  const filePath = path.join(saveLocation, `${token.name}-Total-Supply.png`);
+  const filePath = path.join(saveLocation, `${token.symbol}-Total-Supply.png`);
   
   try {
     if (fs.existsSync(filePath)) {
@@ -398,9 +505,9 @@ bot.command('supply', async (ctx) => {
       }
     }
 
-    // generateSupplyChart(`${token.name} - Total Supply`, token, isHourly = false, ticks = 'day')
+    // generateSupplyChart(`${token.symbol} - Total Supply`, token, isHourly = false, ticks = 'day')
     
-    const newFilePath = await generateSupplyChart(`${token.name}-Total-Supply`, token, isHourly = false, ticks = 'day');
+    const newFilePath = await generateSupplyChart(`${token.symbol}-Total-Supply`, token, isHourly = false, ticks = 'day');
     await ctx.replyWithPhoto(new InputFile(newFilePath));
     } catch (error) {
       console.error('Error generating chart:', error);
@@ -417,7 +524,7 @@ bot.command('supply', async (ctx) => {
 //     return;
 //   }
   
-//   const filePath = path.join(saveLocation, `${token.name}-Holders.png`);
+//   const filePath = path.join(saveLocation, `${token.symbol}-Holders.png`);
   
 //   try {
 //     if (fs.existsSync(filePath)) {
@@ -432,9 +539,9 @@ bot.command('supply', async (ctx) => {
 //       }
 //     }
 
-//     // generateSupplyChart(`${token.name} - Total Supply`, token, isHourly = false, ticks = 'day')
+//     // generateSupplyChart(`${token.symbol} - Total Supply`, token, isHourly = false, ticks = 'day')
     
-//     const newFilePath = await generateHoldersChart(`${token.name}-Holders`, token, isHourly = false, ticks = 'day');
+//     const newFilePath = await generateHoldersChart(`${token.symbol}-Holders`, token, isHourly = false, ticks = 'day');
 //     await ctx.replyWithPhoto(new InputFile(newFilePath));
 //     } catch (error) {
 //       console.error('Error generating chart:', error);
@@ -442,5 +549,12 @@ bot.command('supply', async (ctx) => {
 //     }
 // });
 
+// Call the subscribe function to start listening for events
+
+subscribe(bot).then(() => {
+  console.log('Subscribed to events successfully.');
+}).catch((error) => {
+  console.error('Error subscribing to events:', error);
+});
 
 bot.start();
