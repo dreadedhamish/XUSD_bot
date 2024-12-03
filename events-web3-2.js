@@ -1,5 +1,9 @@
 // import Web3 from 'web3';
 const { Web3 } = require('web3');
+const { InputFile } = require('grammy'); // Import InputFile from grammy
+
+const { generateVibePassImage } = require('./vibePass');
+
 
 // set a provider - MUST be a WebSocket(WSS) provider
 // const web3 = new Web3("wss://rpc.pulsechain.com");
@@ -63,8 +67,6 @@ async function sendTelegramMessage(bot, message) {
   }
 }
 
-
-
 async function subscribe(bot) {
   // create a new contract object, providing the ABI and address
   // const contract = new web3.eth.Contract(abi, address);
@@ -101,36 +103,36 @@ async function subscribe(bot) {
   //   .on('error', console.error);
 
 
-  VibeRegistryContract.events.allEvents()
-    .on('data', async (event) => {
-      const serializedReturnValues = serializeEvent(event.returnValues);
-      const eventDetails = `
-        Contract: VibeRegistry - Event: ${event.event}
-        Timestamp: ${new Date().toISOString()}
-      `;
+  // VibeRegistryContract.events.allEvents()
+  //   .on('data', async (event) => {
+  //     const serializedReturnValues = serializeEvent(event.returnValues);
+  //     const eventDetails = `
+  //       Contract: VibeRegistry - Event: ${event.event}
+  //       Timestamp: ${new Date().toISOString()}
+  //     `;
 
-      // ClassAdded
-      // ClassRemoved
-      // ContractRemovedFromWhitelistFrom
-      // ContractRemovedFromWhitelistTo
-      // ContractWhitelistedFrom
-      // ContractWhitelistedTo
-      // NewBlockProcessed
-      // RewardsCalculated
-      // RewardsCalculationFailed
-      // TaxParametersUpdated
-      // TradingRewardsSet
-      // TransactionRecorded
-      // VibeClassRemoved
-      // VibesCalculated
-      // VibesCalculationFailed
+  //     // ClassAdded
+  //     // ClassRemoved
+  //     // ContractRemovedFromWhitelistFrom
+  //     // ContractRemovedFromWhitelistTo
+  //     // ContractWhitelistedFrom
+  //     // ContractWhitelistedTo
+  //     // NewBlockProcessed
+  //     // RewardsCalculated
+  //     // RewardsCalculationFailed
+  //     // TaxParametersUpdated
+  //     // TradingRewardsSet
+  //     // TransactionRecorded
+  //     // VibeClassRemoved
+  //     // VibesCalculated
+  //     // VibesCalculationFailed
 
-      console.log('Event received:', eventDetails);
-      await sendTelegramMessage(bot, eventDetails);
-    })
+  //     console.log('Event received:', eventDetails);
+  //     await sendTelegramMessage(bot, eventDetails);
+  //   })
 
-  VibeRegistryContract.events.allEvents()
-    .on('error', console.error);
+  // VibeRegistryContract.events.allEvents()
+  //   .on('error', console.error);
 
   // XUSDVibeGovenorContract.events.allEvents()
   //   .on('data', async (event) => {
@@ -146,76 +148,86 @@ async function subscribe(bot) {
   //   .on('error', console.error);
 
   VibePassContract.events.allEvents()
-    .on('data', async (event) => {
-      const serializedReturnValues = serializeEvent(event.returnValues);
-      const eventDetails = `
-        Contract: VibePass: 
-        Event: ${event.event}
-        Block Number: ${event.blockNumber}
-        Transaction Hash: ${event.transactionHash}
-        Args: ${JSON.stringify(serializedReturnValues)}
+  .on('data', async (event) => {
+    const serializedReturnValues = serializeEvent(event.returnValues);
+    let eventDetails = `
+      Contract: VibePass
+      Event: ${event.event}
+      Block Number: ${event.blockNumber}
+      Transaction Hash: ${event.transactionHash}
+      Args: ${JSON.stringify(serializedReturnValues)}
+    `;
+
+    // Check if the event is a Transfer event and meets the specified conditions
+    if (event.event === 'Transfer' && 
+        serializedReturnValues['0'] === '0x0000000000000000000000000000000000000000' && 
+        'tokenId' in serializedReturnValues) {
+      const wallet = serializedReturnValues['1'];
+      const passId = serializedReturnValues['tokenId'];
+      eventDetails += `
+        VibePass Minted �
       `;
 
-      // PassMinted
-      // PassTransferred
-      // UserGladiatorRankUpgrade
-      // GladiatorRankUpdated
-      // VotesUpdated
+      // Generate the image
+      const imagePath = await generateVibePassImage(wallet, passId);
 
-      console.log('Event received:', eventDetails);
-      await sendTelegramMessage(bot, eventDetails);
-    })
+      // Send the image with the message
+      try {
+        await bot.api.sendPhoto(TELEGRAM_CHAT_ID, new InputFile(imagePath), {
+          caption: eventDetails,
+          parse_mode: 'MarkdownV2'
+        });
+      } catch (error) {
+        console.error('Error sending Telegram message:', error);
+      }
+    }
+  });
 
   VibePassContract.events.allEvents()
     .on('error', console.error);
 
 
-  // Trading Rewards Refiller
+  // // Trading Rewards Refiller
 
-  const TradingRewardsFillerContractABI = require('./ABI/tradingRewardsFiller.json');
-  const TradingRewardsFillerContractAddress = '0x3A0410290940b68b7b2032Fab87BF6E1e3647b48';
-  const TradingRewardsFillerContract = new web3.eth.Contract(TradingRewardsFillerContractABI, TradingRewardsFillerContractAddress);
+  // const TradingRewardsFillerContractABI = require('./ABI/tradingRewardsFiller.json');
+  // const TradingRewardsFillerContractAddress = '0x3A0410290940b68b7b2032Fab87BF6E1e3647b48';
+  // const TradingRewardsFillerContract = new web3.eth.Contract(TradingRewardsFillerContractABI, TradingRewardsFillerContractAddress);
 
-  TradingRewardsFillerContract.events.allEvents()
-    .on('data', async (event) => {
-      const serializedReturnValues = serializeEvent(event.returnValues);
-      const eventDetails = `
-        Contract: Trading Rewards Refiller: Event: ${event.event} Args: ${JSON.stringify(serializedReturnValues)}
-      `;
-      // console.log('Event received:', eventDetails);
-      // await sendTelegramMessage(bot, eventDetails);
-    })
+  // TradingRewardsFillerContract.events.allEvents()
+  //   .on('data', async (event) => {
+  //     const serializedReturnValues = serializeEvent(event.returnValues);
+  //     const eventDetails = `
+  //       Contract: Trading Rewards Refiller: Event: ${event.event} Args: ${JSON.stringify(serializedReturnValues)}
+  //     `;
+  //     // console.log('Event received:', eventDetails);
+  //     // await sendTelegramMessage(bot, eventDetails);
+  //   })
     
-  TradingRewardsFillerContract.events.allEvents()  
-    .on('error', console.error);
+  // TradingRewardsFillerContract.events.allEvents()  
+  //   .on('error', console.error);
 
-    // Staking Rewards Refiller
+  // // Staking Rewards Refiller
 
-  const StakingRefillerContractABI = require('./ABI/refillStaking.json');
-  const StakingRefillerContractAddress = '0xC9BAa3A2c23A6Ff2b2A02C4DAd3A17391f282Fb5';
-  const StakingRefillerContract = new web3.eth.Contract(StakingRefillerContractABI, StakingRefillerContractAddress);
+  // const StakingRefillerContractABI = require('./ABI/refillStaking.json');
+  // const StakingRefillerContractAddress = '0xC9BAa3A2c23A6Ff2b2A02C4DAd3A17391f282Fb5';
+  // const StakingRefillerContract = new web3.eth.Contract(StakingRefillerContractABI, StakingRefillerContractAddress);
 
-  StakingRefillerContract.events.allEvents()
-    .on('data', async (event) => {
-      const serializedReturnValues = serializeEvent(event.returnValues);
-      const eventDetails = `
-        Contract: Staking Refiller: Event: ${event.event} Args: ${JSON.stringify(serializedReturnValues)}
-        Block Number: ${event.blockNumber}
-        Transaction Hash: ${event.transactionHash}
-        `;
-      // console.log('Event received:', eventDetails);
-      // await sendTelegramMessage(bot, eventDetails);
-    })
+  // StakingRefillerContract.events.allEvents()
+  //   .on('data', async (event) => {
+  //     const serializedReturnValues = serializeEvent(event.returnValues);
+  //     const eventDetails = `
+  //       Contract: Staking Refiller: Event: ${event.event} Args: ${JSON.stringify(serializedReturnValues)}
+  //       Block Number: ${event.blockNumber}
+  //       Transaction Hash: ${event.transactionHash}
+  //       `;
+  //     // console.log('Event received:', eventDetails);
+  //     // await sendTelegramMessage(bot, eventDetails);
+  //   })
 
-  StakingRefillerContract.events.allEvents()
-  .on('error', console.error);
-
-
-
+  // StakingRefillerContract.events.allEvents()
+  // .on('error', console.error);
 
   console.log('Listening for events...');
-  
-
 }
 
 // function to unsubscribe from a subscription

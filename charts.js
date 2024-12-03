@@ -1,6 +1,9 @@
 // charts.js
 const fs = require("fs");
+const path = require('path');
 const { ChartJSNodeCanvas } = require("chartjs-node-canvas");
+const csv = require('csv-parser');
+
 const axiosInstance = require("./axiosConfig");
 const { bot, graphEndpoint, rpcEndpoint, saveLocation } = require("./bot");
 require('dotenv').config(); // Load environment variables
@@ -753,7 +756,7 @@ async function generateBurnedChart(title, token, isHourly = false, ticks = 'day'
   return `${saveLocation}/${title}.png`; // Return the file path
 }
 
-async function getHolders(blockNumbers, token) {
+async function OLDgetHolders(blockNumbers, token) {
   let contractAddress = token.contractAddress;
   if (typeof contractAddress !== 'string') {
     throw new Error('Invalid contract address');
@@ -787,7 +790,7 @@ async function getHolders(blockNumbers, token) {
   });
 }
 
-async function generateHoldersChart(title, token, isHourly = false, ticks = 'day') {
+async function OLDgenerateHoldersChart(title, token, isHourly = false, ticks = 'day') {
   const timestamps = await getMidnightTimestamps(30);
   const blockNumbers = await getBlockNumbers(timestamps);
   console.log('blockNumbers = ', blockNumbers);
@@ -890,6 +893,142 @@ async function generateHoldersChart(title, token, isHourly = false, ticks = 'day
   return `${saveLocation}/${title}.png`; // Return the file path
 }
 
+// Function to fetch data from Google Sheets
+async function fetchGoogleSheetData(sheetId, sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+  // const response = await axios.get(url);
+  const response = await axiosInstance.get(url);
+  // const response = await axiosInstance.post(rpcEndpoint, requests, {
+  //   headers: { 'Content-Type': 'application/json' }
+  // });
+  
+  return response.data;
+}
+
+// Function to parse CSV data
+function parseCsvData(csvData) {
+  return new Promise((resolve, reject) => {
+    const results = [];
+    const stream = require('stream');
+    const csvStream = csv();
+    const readableStream = new stream.Readable();
+    readableStream._read = () => {}; // No-op
+    readableStream.push(csvData);
+    readableStream.push(null);
+
+    readableStream
+      .pipe(csvStream)
+      .on('data', (data) => results.push(data))
+      .on('end', () => resolve(results))
+      .on('error', (error) => reject(error));
+  });
+}
+
+// Function to generate holders chart
+async function generateHoldersChart(token, sheetId, sheetName, title, isHourly = false, ticks = 'day') {
+  // Fetch data from Google Sheets
+  const csvData = await fetchGoogleSheetData(sheetId, sheetName);
+  let data = await parseCsvData(csvData); // Use let instead of const
+
+  // Restrict to the last 30 values
+  data = data.slice(-30);
+
+  // Extract labels and data
+  const labels = data.map(row => new Date(row['Timestamp']).toISOString().split('T')[0]);
+  const holdersData = data.map(row => parseInt(row['Holders'], 10));
+
+  // Prepare chart data
+  const chartData = {
+    labels: labels,
+    datasets: [
+      {
+        label: 'Holders',
+        data: holdersData,
+        borderColor: token.featureColour,
+        // backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        fill: false,
+      }
+    ]
+  };
+
+  const chartJSNodeCanvas = new ChartJSNodeCanvas({
+    width,
+    height,
+    backgroundColour,
+  });
+
+  const configuration = {
+    type: 'line',
+    data: chartData,
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: title,
+          color: colour,
+          font: {
+            size: 20,
+          },
+        },
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          type: 'linear',
+          position: 'left',
+          title: {
+            display: true,
+            text: 'Total Burned',
+            color: colour
+          },
+          ticks: {
+            callback: function(value) {
+              return value >= 1000000 ? (value / 1000000) + 'M' : value;
+            },
+            color: colour
+          },
+          grid: {
+            color: borderColour,
+            display: false
+          }
+        },
+        x: {
+          ticks: {
+            callback: function(value, index, values) {
+              const date = new Date(chartData.labels[index]);
+              const day = date.getDate();
+              const hour = date.getHours();
+              
+              if (ticks === 'hour' && isHourly) {
+                return index % 2 === 0 ? hour : ''; // Show just the hour number for every second tick
+              } else {
+                return index % 2 === 0 ? day : ''; // Display the day number for every second tick
+              }
+            },
+            autoSkip: false, // Ensure all ticks are considered
+            maxRotation: 0, // Prevent rotation of labels
+            minRotation: 0, // Prevent rotation of labels
+            color: colour,
+          },
+          grid: {
+            color: borderColour,
+            display: false
+          }
+        }
+      },
+      layout: {
+        backgroundColor: backgroundColour,
+      },
+      spanGaps: false // Ensure lines only appear where there is a label
+    }
+  };
+
+  const imageBuffer = await chartJSNodeCanvas.renderToBuffer(configuration); // , 'image'
+  fs.writeFileSync(`${saveLocation}/${title}.png`, imageBuffer);
+  return `${saveLocation}/${title}.png`; // Return the file path
+}
 
 // Export the functions
 module.exports = {

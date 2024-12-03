@@ -7,7 +7,8 @@ const { autoRetry } = require("@grammyjs/auto-retry");
 const fs = require('fs');
 const path = require('path');
 
-// const { subscribe } = require('./events-web3-2');
+const { subscribe } = require('./events-web3-2');
+
 
 // Debugging statements
 console.log('BOT_TOKEN:', process.env.BOT_TOKEN);
@@ -42,7 +43,7 @@ module.exports = {
 const { fetchPriceMultiBlock, formatPriceChangesMessage } = require('./price');
 
 // Import the functions from charts.js
-const { generatePriceChart, generateSupplyChart, generateBurnedChart } = require('./charts');
+const { generatePriceChart, generateSupplyChart, generateBurnedChart, generateHoldersChart } = require('./charts');
 
 // Import helpers
 const { getTotalBurned, getUSDPrice, escapeMarkdownV2, getIpfsGateway, generateContractMessage } = require('./helpers');
@@ -106,7 +107,7 @@ function getToken(command, chatID) {
 }
 
 // Command handler for /contract
-bot.command('contract', async (ctx) => {
+const handleContractCommand = async (ctx) => {
   console.log('Chat ID: ', ctx.chat.id);
   try {
     const token = getToken('contract', ctx.chat.id);
@@ -127,6 +128,11 @@ bot.command('contract', async (ctx) => {
     console.error('Error:', error);
     await ctx.reply('Sorry, there was an error fetching the IPFS gateway.');
   }
+};
+
+// Register the same handler for multiple commands
+['contract', 'ca'].forEach(command => {
+  bot.command(command, handleContractCommand);
 });
 
 bot.command('xusdcontract', async (ctx) => {
@@ -515,46 +521,47 @@ bot.command('supply', async (ctx) => {
     }
 });
 
-// bot.command('holders', async (ctx) => {
-//   const command = ctx.message.text.split(' ')[0];
-//   console.log('Received command:', command, ctx.chat.id);
-//   const token = getToken(command, ctx.chat.id);
-//   if (!token) {
-//     await ctx.reply('Sorry, no token found for this command.');
-//     return;
-//   }
+bot.command('holders', async (ctx) => {
+  const command = ctx.message.text.split(' ')[0];
+  console.log('Received command:', command, ctx.chat.id);
+  const token = getToken(command, ctx.chat.id);
+  if (!token) {
+    await ctx.reply('Sorry, no token found for this command.');
+    return;
+  }
   
-//   const filePath = path.join(saveLocation, `${token.symbol}-Holders.png`);
+  const filePath = path.join(saveLocation, `${token.symbol}-Holders.png`);
   
-//   try {
-//     if (fs.existsSync(filePath)) {
-//       const stats = fs.statSync(filePath);
-//       const now = new Date();
-//       const fileAgeInMinutes = (now - stats.mtime) / 1000 / 60;
+  try {
+    if (fs.existsSync(filePath)) {
+      const stats = fs.statSync(filePath);
+      const now = new Date();
+      const fileAgeInMinutes = (now - stats.mtime) / 1000 / 60;
 
-//       if (fileAgeInMinutes < cacheLifetime) {
-//         await ctx.replyWithPhoto(new InputFile(filePath));
-//         console.log('Chart sent from cache');
-//         return;
-//       }
-//     }
+      if (fileAgeInMinutes < cacheLifetime) {
+        await ctx.replyWithPhoto(new InputFile(filePath));
+        console.log('Chart sent from cache');
+        return;
+      }
+    }
 
-//     // generateSupplyChart(`${token.symbol} - Total Supply`, token, isHourly = false, ticks = 'day')
+    // generateSupplyChart(`${token.symbol} - Total Supply`, token, isHourly = false, ticks = 'day')
     
-//     const newFilePath = await generateHoldersChart(`${token.symbol}-Holders`, token, isHourly = false, ticks = 'day');
-//     await ctx.replyWithPhoto(new InputFile(newFilePath));
-//     } catch (error) {
-//       console.error('Error generating chart:', error);
-//       await ctx.reply('Sorry, there was an error generating the chart.');
-//     }
-// });
+    sheetId = "1jrbzvOoo4vwHusY4DrGJv9cT_qLkFIa6dtq4U5kRF8g"
+    const newFilePath = await generateHoldersChart(token, sheetId, token.symbol, `${token.symbol}-Holders`);
+    await ctx.replyWithPhoto(new InputFile(newFilePath));
+    } catch (error) {
+      console.error('Error generating chart:', error);
+      await ctx.reply('Sorry, there was an error generating the chart.');
+    }
+});
 
 // Call the subscribe function to start listening for events
 
-// subscribe(bot).then(() => {
-//   console.log('Subscribed to events successfully.');
-// }).catch((error) => {
-//   console.error('Error subscribing to events:', error);
-// });
+subscribe(bot).then(() => {
+  console.log('Subscribed to events successfully.');
+}).catch((error) => {
+  console.error('Error subscribing to events:', error);
+});
 
 bot.start();
