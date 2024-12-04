@@ -477,7 +477,7 @@ bot.command('burned', async (ctx) => {
     const message = `
     \`\`\`
 ⠀    
-⠀⠀⢱⡀⠀\n⠀⢀⣿⣿⡄  Burn Stats\n⠀⢸⡿⢹⣿  XUSD: ${escapeMarkdownV2(burned.toFixed(0))}\n⠀⠈⢧⢠⠏  USD:  ${escapeMarkdownV2(usdValueBurned.toFixed(0))} 
+⠀⠀⢱⡀⠀  ${token.symbol}\n⠀⢀⣿⣿⡄  Burn Stats\n⠀⢸⡿⢹⣿  XUSD: ${escapeMarkdownV2(burned.toFixed(0))}\n⠀⠈⢧⢠⠏  USD:  ${escapeMarkdownV2(usdValueBurned.toFixed(0))} 
 ⠀    
     \`\`\`
     `;
