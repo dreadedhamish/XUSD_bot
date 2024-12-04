@@ -25,7 +25,8 @@ const options = {
   }
 };
 
-const web3 = new Web3(new Web3.providers.WebsocketProvider("ws://192.168.1.103:8546", options));
+const web3 = new Web3(new Web3.providers.WebsocketProvider("ws://rpc.pulsechain.com", options));
+// const web3 = new Web3(new Web3.providers.WebsocketProvider("ws://192.168.1.103:8546", options));
 
 
 // const XUSDVibeGovenorContractAddress = '0x20a7d24fd1e43f0c0b3d434cbd607ea6a62d5a3a';

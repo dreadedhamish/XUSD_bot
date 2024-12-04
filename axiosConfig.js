@@ -32,7 +32,7 @@ cachedAxiosInstance.interceptors.request.use(request => {
 cachedAxiosInstance.interceptors.response.use(
   response => {
     console.info(`Request to ${response.config.url} succeeded`);
-    console.info('Response data:', response.data);
+    // console.info('Response data:', response.data);
     return response;
   },
   error => {
