@@ -56,6 +56,53 @@ async function getBlockNumbers(timestamps) {
 }
 
 async function getTotalBurned(token, blockNumber = "latest") {
+  if (token.symbol === "1SWAP") {
+    const burnAddresses = [
+      "0x000000000000000000000000000000000000dead",
+      "0x0000000000000000000000000000000000000000",
+      "0x0e0Deb1C756d81c19235CF6C832377bC481cA05A"
+    ];
+    const methodSignature = "0x70a08231000000000000000000000000"; // balanceOf(address) method signature
+
+    // Create batch request data
+    const requests = burnAddresses.map((address, index) => ({
+      jsonrpc: "2.0",
+      method: "eth_call",
+      params: [
+        {
+          to: token.contractAddress,
+          data: methodSignature + address.slice(2) // Append the address without '0x'
+        },
+        "latest"
+      ],
+      id: index + 1
+    }));
+
+    try {
+      // Log the request
+      console.log('Request:', JSON.stringify(requests, null, 2));
+
+      const response = await axiosInstance.post(rpcEndpoint, requests, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      // Log the response
+      console.log('Response:', JSON.stringify(response.data, null, 2));
+
+      // Sum the balances
+      const totalBurned = response.data.reduce((sum, res) => {
+        const balanceWei = res.result;
+        const balanceEther = parseInt(balanceWei, 16) / 1e18; // Convert from Wei to Ether
+        return sum + balanceEther;
+      }, 0);
+
+      return totalBurned;
+    } catch (error) {
+      console.error('Error fetching balances:', error);
+      throw error;
+    }
+  }
+  
   const data = {
     jsonrpc: "2.0",
     method: "eth_call",
