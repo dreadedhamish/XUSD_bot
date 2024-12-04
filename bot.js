@@ -101,6 +101,7 @@ function getToken(command, chatID) {
   if (!token) {
     console.log('Unknown chatID - using XUSD');
     return tokens[1]; // Return tokens[1] if no token is found
+    
   }
   
   return token;
@@ -442,7 +443,11 @@ bot.command('burned_chart', async (ctx) => {
 
 // Command handler for /price
 bot.command('burned', async (ctx) => {
+  console.log('/burned called');
   console.log('Chat ID: ', ctx.chat.id);
+  if (ctx.chat.id === "-1002100001267") {
+    return;
+  }
   try {
     const token = getToken('price', ctx.chat.id);
     if (!token) {

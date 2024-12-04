@@ -980,7 +980,7 @@ async function generateHoldersChart(token, sheetId, sheetName, title, isHourly =
           position: 'left',
           title: {
             display: true,
-            text: 'Total Burned',
+            text: 'Users',
             color: colour
           },
           ticks: {
