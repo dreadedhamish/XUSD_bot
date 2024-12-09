@@ -676,7 +676,7 @@ async function getMarketCap(blockNumbers, token) {
   // Fetch price data
   const priceResponse = await axiosInstance.post(graphEndpoint, { query: priceQuery }, {
     headers: { 'Content-Type': 'application/json' },
-    timeout: 25000
+    timeout: 30000
   });
   console.log('priceResponse = ', priceResponse);
 
@@ -722,7 +722,7 @@ async function generateMCapChart(title, token, isHourly = false, ticks = 'day') 
     labels: labels,
     datasets: [
       {
-        label: 'Market Cap',
+        label: 'Market Cap $',
         data: data,
         borderColor: token.featureColour,
         // backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -760,12 +760,12 @@ async function generateMCapChart(title, token, isHourly = false, ticks = 'day') 
           position: 'left',
           title: {
             display: true,
-            text: 'Market Cap',
+            text: 'Market Cap $',
             color: colour
           },
           ticks: {
             callback: function(value) {
-              return value >= 1000000 ? (value / 1000000) + 'M' : value;
+              return value >= 500000 ? (value / 1000000) + 'M' : value;
             },
             color: colour
           },
