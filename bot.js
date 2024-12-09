@@ -43,7 +43,7 @@ module.exports = {
 const { fetchPriceMultiBlock, formatPriceChangesMessage } = require('./price');
 
 // Import the functions from charts.js
-const { generatePriceChart, generateSupplyChart, generateBurnedChart, generateHoldersChart } = require('./charts');
+const { generatePriceChart, generateSupplyChart, generateBurnedChart, generateHoldersChart, generateMCapChart } = require('./charts');
 
 // Import helpers
 const { getTotalBurned, getUSDPrice, escapeMarkdownV2, getIpfsGateway, generateContractMessage } = require('./helpers');
@@ -100,7 +100,7 @@ function getToken(command, chatID) {
 
   if (!token) {
     console.log('Unknown chatID - using XUSD');
-    return tokens[0]; // Return tokens[1] if no token is found
+    return tokens[1]; // Return tokens[1] if no token is found
     
   }
   
@@ -525,6 +525,41 @@ bot.command('supply', async (ctx) => {
       await ctx.reply('Sorry, there was an error generating the chart.');
     }
 });
+
+bot.command('marketcap', async (ctx) => {
+  const command = ctx.message.text.split(' ')[0];
+  console.log('Received command:', command, ctx.chat.id);
+  const token = getToken(command, ctx.chat.id);
+  if (!token) {
+    await ctx.reply('Sorry, no token found for this command.');
+    return;
+  }
+  
+  const filePath = path.join(saveLocation, `${token.symbol}-Market-Cap.png`);
+  
+  try {
+    if (fs.existsSync(filePath)) {
+      const stats = fs.statSync(filePath);
+      const now = new Date();
+      const fileAgeInMinutes = (now - stats.mtime) / 1000 / 60;
+
+      if (fileAgeInMinutes < cacheLifetime) {
+        await ctx.replyWithPhoto(new InputFile(filePath));
+        console.log('Chart sent from cache');
+        return;
+      }
+    }
+
+    // generateSupplyChart(`${token.symbol} - Total Supply`, token, isHourly = false, ticks = 'day')
+    
+    const newFilePath = await generateMCapChart(`${token.symbol}-Market-Cap`, token, isHourly = false, ticks = 'day');
+    await ctx.replyWithPhoto(new InputFile(newFilePath));
+    } catch (error) {
+      console.error('Error generating chart:', error);
+      await ctx.reply('Sorry, there was an error generating the chart.');
+    }
+});
+
 
 bot.command('holders', async (ctx) => {
   const command = ctx.message.text.split(' ')[0];

@@ -568,7 +568,199 @@ async function generateSupplyChart(title, token, isHourly = false, ticks = 'day'
           position: 'left',
           title: {
             display: true,
-            text: 'Total Burned',
+            text: 'Total Supply',
+            color: colour
+          },
+          ticks: {
+            callback: function(value) {
+              return value >= 1000000 ? (value / 1000000) + 'M' : value;
+            },
+            color: colour
+          },
+          grid: {
+            color: borderColour,
+            display: false
+          }
+        },
+        x: {
+          ticks: {
+            callback: function(value, index, values) {
+              const date = new Date(chartData.labels[index]);
+              const day = date.getDate();
+              const hour = date.getHours();
+              
+              if (ticks === 'hour' && isHourly) {
+                return index % 2 === 0 ? hour : ''; // Show just the hour number for every second tick
+              } else {
+                return index % 2 === 0 ? day : ''; // Display the day number for every second tick
+              }
+            },
+            autoSkip: false, // Ensure all ticks are considered
+            maxRotation: 0, // Prevent rotation of labels
+            minRotation: 0, // Prevent rotation of labels
+            color: colour,
+          },
+          grid: {
+            color: borderColour,
+            display: false
+          }
+        }
+      },
+      layout: {
+        backgroundColor: backgroundColour,
+      },
+      spanGaps: false // Ensure lines only appear where there is a label
+    }
+  };
+  
+  const imageBuffer = await chartJSNodeCanvas.renderToBuffer(configuration); // , 'image'
+  fs.writeFileSync(`${saveLocation}/${title}.png`, imageBuffer);
+  return `${saveLocation}/${title}.png`; // Return the file path
+}
+
+async function getMarketCap(blockNumbers, token) {
+  let contractAddress = token.contractAddress;
+  if (typeof contractAddress !== 'string') {
+    throw new Error('Invalid contract address');
+  }
+  contractAddress = contractAddress.toLowerCase();
+
+  // Create batch request data for total supply
+  const supplyRequests = blockNumbers.map((block, index) => ({
+    jsonrpc: "2.0",
+    method: "eth_call",
+    params: [
+      {
+        to: contractAddress,
+        data: "0x18160ddd" // totalSupply() method signature
+      },
+      block.blockNumber
+    ],
+    id: index + 1
+  }));
+
+  // Fetch total supply data
+  const supplyResponse = await axiosInstance.post(rpcEndpoint, supplyRequests, {
+    headers: { 'Content-Type': 'application/json' }
+  });
+
+  const totalSupplies = supplyResponse.data.map((res, index) => {
+    const balanceHex = res.result;
+    const balance = parseInt(balanceHex, 16) / 1e18;
+    return {
+      timestamp: blockNumbers[index].timestamp,
+      blockNumber: blockNumbers[index].blockNumber,
+      totalSupply: balance
+    };
+  });
+  console.log('totalSupplies = ', totalSupplies);
+
+  // Create GraphQL query for prices
+  const priceQueries = blockNumbers.map((block, index) => `
+    pair${index}: pair(id: "${token.mainPair}", block: { number: ${parseInt(block.blockNumber, 16)} }) {
+      token1 {
+        derivedUSD
+      }
+    }
+  `).join('\n');
+
+  const priceQuery = `
+    {
+      ${priceQueries}
+    }
+  `;
+
+  // Log the priceQuery
+  console.log('priceQuery:', priceQuery);
+
+  // Fetch price data
+  const priceResponse = await axiosInstance.post(graphEndpoint, { query: priceQuery }, {
+    headers: { 'Content-Type': 'application/json' },
+    timeout: 25000
+  });
+  console.log('priceResponse = ', priceResponse);
+
+  const prices = blockNumbers.map((block, index) => {
+    const priceData = priceResponse.data.data[`pair${index}`];
+    const price = parseFloat(priceData.token1.derivedUSD);
+    return {
+      timestamp: block.timestamp,
+      blockNumber: block.blockNumber,
+      price: price
+    };
+  });
+
+  // Calculate market cap for each block number
+  const marketCaps = blockNumbers.map((block, index) => {
+    const totalSupply = totalSupplies[index].totalSupply;
+    const price = prices[index].price;
+    const marketCap = totalSupply * price;
+    return {
+      timestamp: block.timestamp,
+      blockNumber: block.blockNumber,
+      marketCap: marketCap
+    };
+  });
+
+  return marketCaps;
+}
+
+async function generateMCapChart(title, token, isHourly = false, ticks = 'day') {
+  const timestamps = await getMidnightTimestamps(30);
+  const blockNumbers = await getBlockNumbers(timestamps);
+  console.log('blockNumbers = ', blockNumbers);
+  const mcaps = await getMarketCap(blockNumbers, token);
+  console.log(mcaps);
+
+  // Extract labels (timestamps) and data (balances)
+  const labels = mcaps.map(entry => new Date(entry.timestamp * 1000).toISOString().split('T')[0]);
+  // const data = mcaps.map(entry => entry.balance);
+  const data = mcaps.map(entry => entry.marketCap);
+
+
+  const chartData = {
+    labels: labels,
+    datasets: [
+      {
+        label: 'Market Cap',
+        data: data,
+        borderColor: token.featureColour,
+        // backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        fill: false,
+      }
+    ]
+  };
+
+  const chartJSNodeCanvas = new ChartJSNodeCanvas({
+    width,
+    height,
+    backgroundColour,
+  });
+
+  const configuration = {
+    type: 'line',
+    data: chartData,
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: title,
+          color: colour,
+          font: {
+            size: 20,
+          },
+        },
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          type: 'linear',
+          position: 'left',
+          title: {
+            display: true,
+            text: 'Market Cap',
             color: colour
           },
           ticks: {
@@ -1035,5 +1227,6 @@ module.exports = {
   generatePriceChart,
   generateSupplyChart,
   generateBurnedChart,
-  generateHoldersChart
+  generateHoldersChart,
+  generateMCapChart
 };
