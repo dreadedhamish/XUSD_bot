@@ -77,6 +77,16 @@ const tokens = [
 ⠘⢿⣷⣄⠀⡠⠾⠿⠃  XUSD
 ⠀⠀⠙⢿⣿⣷⣄⠀⠀  Vibratile
 ⢠⣶⡶⠊⠀⠙⢿⣷⡄  Asset`
+  },
+  {
+    name: 'VIBES',
+    symbol: 'VIBES',
+    contractAddress: '0x50D0DD7f2164212B6218EDe3834E39d629bd72dc',
+    mainPair: '0x503ea91a13c3e0a1898e76cb148e86954ddd9327',
+    position: 'token0',
+    featureColour: '#64579B',
+    chatID: '',
+    flair: `VIBES`
   }
   // Add more tokens here as needed
 ];
@@ -156,6 +166,22 @@ bot.command('1swapcontract', async (ctx) => {
   console.log('Chat ID: ', ctx.chat.id);
   try {  
     const message = await generateContractMessage(tokens[0]);
+    console.log('Payload before escaping:', message); // Log the payload before escaping
+    
+    await ctx.reply(message, {
+      parse_mode: 'MarkdownV2',
+      disable_web_page_preview: true
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    await ctx.reply('Sorry, there was an error.');
+  }
+});
+
+bot.command('vibescontract', async (ctx) => {
+  console.log('Chat ID: ', ctx.chat.id);
+  try {  
+    const message = await generateContractMessage(tokens[2]);
     console.log('Payload before escaping:', message); // Log the payload before escaping
     
     await ctx.reply(message, {
@@ -519,6 +545,48 @@ bot.command('supply', async (ctx) => {
     // generateSupplyChart(`${token.symbol} - Total Supply`, token, isHourly = false, ticks = 'day')
     
     const newFilePath = await generateSupplyChart(`${token.symbol}-Total-Supply`, token, isHourly = false, ticks = 'day');
+    await ctx.replyWithPhoto(new InputFile(newFilePath));
+    } catch (error) {
+      console.error('Error generating chart:', error);
+      await ctx.reply('Sorry, there was an error generating the chart.');
+    }
+});
+
+bot.command('supply_all_time', async (ctx) => {
+  const command = ctx.message.text.split(' ')[0];
+  console.log('Received command:', command, ctx.chat.id);
+  const token = getToken(command, ctx.chat.id);
+  if (!token) {
+    await ctx.reply('Sorry, no token found for this command.');
+    return;
+  }
+  
+  const filePath = path.join(saveLocation, `${token.symbol}-Total-Supply_All_Time.png`);
+  
+  try {
+    if (fs.existsSync(filePath)) {
+      const stats = fs.statSync(filePath);
+      const now = new Date();
+      const fileAgeInMinutes = (now - stats.mtime) / 1000 / 60;
+
+      if (fileAgeInMinutes < cacheLifetime) {
+        await ctx.replyWithPhoto(new InputFile(filePath));
+        console.log('Chart sent from cache');
+        return;
+      }
+    }
+
+    // generateSupplyChart(`${token.symbol} - Total Supply`, token, isHourly = false, ticks = 'day')
+    
+    const now = new Date();
+    const startDate = new Date(2024, 8, 25); // (Month is zero-indexed: 8 = September)
+    const diffInMs = now - startDate;
+    const daysSince = Math.floor(diffInMs / (1000 * 60 * 60 * 24)) + 1;
+    console.log(`Days since September 25 plus 1: ${daysSince}`);
+
+    days = daysSince;
+
+    const newFilePath = await generateSupplyChart(`${token.symbol}-Total-Supply-All-Time`, token, isHourly = false, ticks = 'day', days );
     await ctx.replyWithPhoto(new InputFile(newFilePath));
     } catch (error) {
       console.error('Error generating chart:', error);

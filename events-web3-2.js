@@ -174,14 +174,28 @@ async function subscribe(bot) {
 
       // Send the image with the message
       try {
-        await bot.api.sendPhoto(TELEGRAM_CHAT_ID, new InputFile(imagePath), {
-          caption: eventDetails,
-          parse_mode: 'MarkdownV2'
-        });
+        if (!fs.existsSync(imagePath)) {
+          console.error("Image file not found:", imagePath);
+        }
+        
+        await bot.api.sendPhoto(
+          TELEGRAM_CHAT_ID, 
+          new InputFile(path.resolve(imagePath)), // Ensure absolute path
+          {
+            caption: eventDetails,
+            parse_mode: 'MarkdownV2'
+          }
+        );
       } catch (error) {
         console.error('Error sending Telegram message:', error);
       }
     }
+    else
+      console.log('Event received:', eventDetails);
+      console.log("serializedReturnValues['0'] = ", serializedReturnValues['0']);
+      console.log("serializedReturnValues['1'] = ", serializedReturnValues['1']);
+      console.log("serializedReturnValues['tokenId'] = ", serializedReturnValues['tokenId']);
+
   });
 
   VibePassContract.events.allEvents()

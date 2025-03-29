@@ -1,0 +1,13 @@
+contract - Contract Details
+ca - Contract Details
+xusdcontract - XUSD Contract Details
+1swapcontract - 1SWAP Contract Details
+price - Current price
+1d - 1 Day Price Chart
+7d - 7 Day Price Chart
+30d - 30 Day Price Chart
+burned - Burned Token Stats
+burned_chart - Burned Token Chart
+supply - Total Supply Chart
+marketcap - Marketcap Chart
+holders - Total Holders Chart

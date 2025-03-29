@@ -20,16 +20,50 @@ async function fetchLatestBlockNumber() {
   return parseInt(data.result, 16);
 }
 
+// async function getMidnightTimestamps(days) {
+//   const timestamps = [];
+//   const now = new Date();
+
+//   for (let i = 0; i < days; i++) {
+//     const date = new Date(now);
+//     date.setUTCDate(now.getUTCDate() - i);
+//     date.setUTCHours(0, 0, 0, 0); // Set to midnight GMT
+//     timestamps.push(Math.floor(date.getTime() / 1000)); // Convert to Unix timestamp
+//   }
+
+//   // Add the current timestamp
+//   timestamps.push(Math.floor(now.getTime() / 1000));
+
+//   // Sort the timestamps in ascending order
+//   timestamps.sort((a, b) => a - b);
+
+//   return timestamps;
+// }
+
 async function getMidnightTimestamps(days) {
   const timestamps = [];
   const now = new Date();
 
-  for (let i = 0; i < days; i++) {
+  let step = 1;
+  if (days > 800) {
+    step = 16;
+  } else if (days > 400) {
+    step = 8;
+  } else if (days > 200) {
+    step = 4;
+  } else if (days > 100) {
+    step = 2;
+  }
+
+  for (let i = 0; i < days; i += step) {
     const date = new Date(now);
     date.setUTCDate(now.getUTCDate() - i);
-    date.setUTCHours(0, 0, 0, 0); // Set to midnight GMT
-    timestamps.push(Math.floor(date.getTime() / 1000)); // Convert to Unix timestamp
+    date.setUTCHours(0, 0, 0, 0);
+    timestamps.push(Math.floor(date.getTime() / 1000));
   }
+
+  // Add the current timestamp
+  timestamps.push(Math.floor(now.getTime() / 1000));
 
   // Sort the timestamps in ascending order
   timestamps.sort((a, b) => a - b);
@@ -212,9 +246,11 @@ async function generateContractMessage(token) {
   // Determine the additional message based on the token symbol
   let additionalMessage;
   if (token.symbol === 'XUSD') {
-    additionalMessage = 'Looking for OneSwap? /1swapcontract';
+    additionalMessage = 'Looking for OneSwap? /1swapcontract\nLooking for VIBES? /vibescontract';
   } else if (token.symbol === '1SWAP') {
-    additionalMessage = 'Looking for XUSD? /xusdcontract';
+    additionalMessage = 'Looking for XUSD? /xusdcontract\nLooking for VIBES? /vibescontract';
+  } else if (token.symbol === 'VIBES') {
+    additionalMessage = 'Looking for XUSD? /xusdcontract\nLooking for OneSwap? /1swapcontract';
   } else {
     throw new Error('Unknown token symbol');
   }

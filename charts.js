@@ -11,11 +11,14 @@ require('dotenv').config(); // Load environment variables
 const { getMidnightTimestamps, getBlockNumbers } = require('./helpers');
 
 // Chart defaults
-const width = 500; // width of the chart
-const height = 300; // height of the chart
+const width = 750; // width of the chart
+const height = 450; // height of the chart
 const backgroundColour = "black";
 const borderColour = "rgba(255, 255, 255, 0.3)";
 const colour = "rgba(255, 255, 255, 0.9)";
+const titleFontSize = 32
+const tickFontSize = 18
+const axisFontSize = 18
 
 // Generic function to fetch data based on the GraphQL query
 async function fetchData(query) {
@@ -177,7 +180,7 @@ async function generatePriceChart(
           text: title,
           color: colour,
           font: {
-            size: 20,
+            size: titleFontSize,
           },
         },
         legend: {
@@ -192,12 +195,18 @@ async function generatePriceChart(
             display: true,
             text: "Volume (USD)",
             color: colour,
+            font: {
+              size: axisFontSize,
+            },
           },
           ticks: {
             callback: function (value) {
               return value >= 1000 ? value / 1000 + "k" : value;
             },
             color: colour,
+            font: {
+              size: tickFontSize,
+            },
           },
           grid: {
             color: borderColour,
@@ -211,9 +220,15 @@ async function generatePriceChart(
             display: true,
             text: "Price (USD)",
             color: colour,
+            font: {
+              size: axisFontSize,
+            },
           },
           ticks: {
             color: colour,
+            font: {
+              size: tickFontSize,
+            },
           },
           grid: {
             drawOnChartArea: false,
@@ -383,7 +398,7 @@ async function generateCirculatingSupplyChart(title, token, isHourly = false, ti
           text: title,
           color: 'black',
           font: {
-            size: 20
+            size: titleFontSize
           }
         },
         legend: {
@@ -397,7 +412,10 @@ async function generateCirculatingSupplyChart(title, token, isHourly = false, ti
           title: {
             display: true,
             text: 'Circulating Supply',
-            color: 'black'
+            color: 'black',
+            font: {
+              size: axisFontSize,
+            },
           },
           ticks: {
             callback: function(value) {
@@ -426,7 +444,10 @@ async function generateCirculatingSupplyChart(title, token, isHourly = false, ti
             autoSkip: false, // Ensure all ticks are considered
             maxRotation: 0, // Prevent rotation of labels
             minRotation: 0, // Prevent rotation of labels
-            color: 'black'
+            color: 'black',
+            font: {
+              size: axisFontSize,
+            },
           },
           grid: {
             color: 'rgba(0, 0, 0, 0.1)',
@@ -515,12 +536,12 @@ async function getTotalSupply(blockNumbers, token) {
   });
 }
 
-async function generateSupplyChart(title, token, isHourly = false, ticks = 'day') {
-  const timestamps = await getMidnightTimestamps(30);
+async function generateSupplyChart(title, token, isHourly = false, ticks = 'day', days='30') {
+  const timestamps = await getMidnightTimestamps(days);
   const blockNumbers = await getBlockNumbers(timestamps);
-  console.log('blockNumbers = ', blockNumbers);
+  // console.log('blockNumbers = ', blockNumbers);
   const balances = await getTotalSupply(blockNumbers, token);
-  console.log(balances);
+  // console.log(balances);
 
   // Extract labels (timestamps) and data (balances)
   const labels = balances.map(entry => new Date(entry.timestamp * 1000).toISOString().split('T')[0]);
@@ -555,7 +576,7 @@ async function generateSupplyChart(title, token, isHourly = false, ticks = 'day'
           text: title,
           color: colour,
           font: {
-            size: 20,
+            size: titleFontSize,
           },
         },
         legend: {
@@ -569,13 +590,19 @@ async function generateSupplyChart(title, token, isHourly = false, ticks = 'day'
           title: {
             display: true,
             text: 'Total Supply',
-            color: colour
+            color: colour,
+            font: {
+              size: axisFontSize,
+            },
           },
           ticks: {
             callback: function(value) {
               return value >= 1000000 ? (value / 1000000) + 'M' : value;
             },
-            color: colour
+            color: colour,
+            font: {
+              size: tickFontSize,
+            },
           },
           grid: {
             color: borderColour,
@@ -589,16 +616,75 @@ async function generateSupplyChart(title, token, isHourly = false, ticks = 'day'
               const day = date.getDate();
               const hour = date.getHours();
               
+              // if (ticks === 'hour' && isHourly) {
+              //   return index % 2 === 0 ? hour : ''; // Show just the hour number for every second tick
+              // } else {
+              //   return index % 2 === 0 ? day : ''; // Display the day number for every second tick
+              // }
+
+              // if (ticks === 'hour' && isHourly) {
+              //   return index % 2 === 0 ? hour : ''; // Show just the hour number for every second tick
+              // } else if (days > 30) {
+              //   return index % 15 === 0 ? day : ''; // Show the day number every 10 days if days > 30
+              // } else {
+              //   return index % 2 === 0 ? day : ''; // Display the day number for every second tick otherwise
+              // }
+
               if (ticks === 'hour' && isHourly) {
-                return index % 2 === 0 ? hour : ''; // Show just the hour number for every second tick
+                // Show just the hour every second tick
+                return index % 2 === 0 ? hour : '';
+              } else if (days > 30) {
+                // Original - shows every day, which get's taxing on the API call
+                // // If it's the first day of the month, show abbreviated month name
+                // if (day === 1) {
+                //   return date.toLocaleString('default', { month: 'short' });
+                // } else {
+                //   return '';
+                // }
+
+                // Selectively change what day to show the Month on, allowing for the 1st being left out.
+                if (days > 800) {
+                  if (day >= 1 && day <= 16) {
+                    return date.toLocaleString('default', { month: 'short' });
+                  } else {
+                    return '';
+                  }
+                } else if (days > 400) {
+                  if (day >= 1 && day <= 8) {
+                    return date.toLocaleString('default', { month: 'short' });
+                  } else {
+                    return '';
+                  }
+                } else if (days > 200) {
+                  if (day >= 1 && day <= 4) {
+                    return date.toLocaleString('default', { month: 'short' });
+                  } else {
+                    return '';
+                  }
+                } else if (days > 100) {
+                  if (day >= 1 && day <= 2) {
+                    return date.toLocaleString('default', { month: 'short' });
+                  } else {
+                    return '';
+                  }
+                } else {
+                  // fallback if days > 30 but <= 100
+                  return '';
+                }
+
+
               } else {
-                return index % 2 === 0 ? day : ''; // Display the day number for every second tick
+                // For fewer than 30 days, show the day every second tick
+                return index % 2 === 0 ? day : '';
               }
             },
             autoSkip: false, // Ensure all ticks are considered
             maxRotation: 0, // Prevent rotation of labels
             minRotation: 0, // Prevent rotation of labels
             color: colour,
+            font: {
+              size: tickFontSize,
+            },
           },
           grid: {
             color: borderColour,
@@ -653,7 +739,7 @@ async function getMarketCap(blockNumbers, token) {
       totalSupply: balance
     };
   });
-  console.log('totalSupplies = ', totalSupplies);
+  // console.log('totalSupplies = ', totalSupplies);
 
   // Create GraphQL query for prices
   const priceQueries = blockNumbers.map((block, index) => `
@@ -671,14 +757,14 @@ async function getMarketCap(blockNumbers, token) {
   `;
 
   // Log the priceQuery
-  console.log('priceQuery:', priceQuery);
+  // console.log('priceQuery:', priceQuery);
 
   // Fetch price data
   const priceResponse = await axiosInstance.post(graphEndpoint, { query: priceQuery }, {
     headers: { 'Content-Type': 'application/json' },
     timeout: 30000
   });
-  console.log('priceResponse = ', priceResponse);
+  // console.log('priceResponse = ', priceResponse);
 
   const prices = blockNumbers.map((block, index) => {
     const priceData = priceResponse.data.data[`pair${index}`];
@@ -708,9 +794,9 @@ async function getMarketCap(blockNumbers, token) {
 async function generateMCapChart(title, token, isHourly = false, ticks = 'day') {
   const timestamps = await getMidnightTimestamps(30);
   const blockNumbers = await getBlockNumbers(timestamps);
-  console.log('blockNumbers = ', blockNumbers);
+  // console.log('blockNumbers = ', blockNumbers);
   const mcaps = await getMarketCap(blockNumbers, token);
-  console.log(mcaps);
+  // console.log(mcaps);
 
   // Extract labels (timestamps) and data (balances)
   const labels = mcaps.map(entry => new Date(entry.timestamp * 1000).toISOString().split('T')[0]);
@@ -747,7 +833,7 @@ async function generateMCapChart(title, token, isHourly = false, ticks = 'day') 
           text: title,
           color: colour,
           font: {
-            size: 20,
+            size: titleFontSize,
           },
         },
         legend: {
@@ -761,13 +847,19 @@ async function generateMCapChart(title, token, isHourly = false, ticks = 'day') 
           title: {
             display: true,
             text: 'Market Cap $',
-            color: colour
+            color: colour,
+            font: {
+              size: axisFontSize,
+            },
           },
           ticks: {
             callback: function(value) {
               return value >= 500000 ? (value / 1000000) + 'M' : value;
             },
-            color: colour
+            color: colour,
+            font: {
+              size: tickFontSize,
+            },
           },
           grid: {
             color: borderColour,
@@ -791,6 +883,9 @@ async function generateMCapChart(title, token, isHourly = false, ticks = 'day') 
             maxRotation: 0, // Prevent rotation of labels
             minRotation: 0, // Prevent rotation of labels
             color: colour,
+            font: {
+              size: tickFontSize,
+            },
           },
           grid: {
             color: borderColour,
@@ -885,7 +980,7 @@ async function generateBurnedChart(title, token, isHourly = false, ticks = 'day'
           text: title,
           color: colour,
           font: {
-            size: 20,
+            size: titleFontSize,
           },
         },
         legend: {
@@ -899,13 +994,19 @@ async function generateBurnedChart(title, token, isHourly = false, ticks = 'day'
           title: {
             display: true,
             text: 'Total Burned',
-            color: colour
+            color: colour,
+            font: {
+              size: axisFontSize,
+            },
           },
           ticks: {
             callback: function(value) {
               return value >= 1000000 ? (value / 1000000) + 'M' : value;
             },
-            color: colour
+            color: colour,
+            font: {
+              size: tickFontSize,
+            },
           },
           grid: {
             color: borderColour,
@@ -929,6 +1030,9 @@ async function generateBurnedChart(title, token, isHourly = false, ticks = 'day'
             maxRotation: 0, // Prevent rotation of labels
             minRotation: 0, // Prevent rotation of labels
             color: colour,
+            font: {
+              size: tickFontSize,
+            },
           },
           grid: {
             color: borderColour,
@@ -985,9 +1089,9 @@ async function OLDgetHolders(blockNumbers, token) {
 async function OLDgenerateHoldersChart(title, token, isHourly = false, ticks = 'day') {
   const timestamps = await getMidnightTimestamps(30);
   const blockNumbers = await getBlockNumbers(timestamps);
-  console.log('blockNumbers = ', blockNumbers);
+  // console.log('blockNumbers = ', blockNumbers);
   const balances = await getHolders(blockNumbers, token);
-  console.log(balances);
+  // console.log(balances);
 
   // Extract labels (timestamps) and data (balances)
   const labels = balances.map(entry => new Date(entry.timestamp * 1000).toISOString().split('T')[0]);
@@ -1022,7 +1126,7 @@ async function OLDgenerateHoldersChart(title, token, isHourly = false, ticks = '
           text: title,
           color: colour,
           font: {
-            size: 20,
+            size: titleFontSize,
           },
         },
         legend: {
@@ -1036,7 +1140,10 @@ async function OLDgenerateHoldersChart(title, token, isHourly = false, ticks = '
           title: {
             display: true,
             text: 'Total Burned',
-            color: colour
+            color: colour,
+            font: {
+              size: axisFontSize,
+            },
           },
           ticks: {
             callback: function(value) {
@@ -1159,7 +1266,7 @@ async function generateHoldersChart(token, sheetId, sheetName, title, isHourly =
           text: title,
           color: colour,
           font: {
-            size: 20,
+            size: titleFontSize,
           },
         },
         legend: {
@@ -1173,13 +1280,19 @@ async function generateHoldersChart(token, sheetId, sheetName, title, isHourly =
           title: {
             display: true,
             text: 'Users',
-            color: colour
+            color: colour,
+            font: {
+              size: axisFontSize,
+            },
           },
           ticks: {
             callback: function(value) {
               return value >= 1000000 ? (value / 1000000) + 'M' : value;
             },
-            color: colour
+            color: colour,
+            font: {
+              size: tickFontSize,
+            },
           },
           grid: {
             color: borderColour,
@@ -1203,6 +1316,9 @@ async function generateHoldersChart(token, sheetId, sheetName, title, isHourly =
             maxRotation: 0, // Prevent rotation of labels
             minRotation: 0, // Prevent rotation of labels
             color: colour,
+            font: {
+              size: tickFontSize,
+            },
           },
           grid: {
             color: borderColour,
