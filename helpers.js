@@ -261,8 +261,8 @@ async function generateContractMessage(token) {
 
 ${token.flair}
 
-Name: ${token.name}
-Symbol: ${token.symbol}
+⠀Name: ${token.name}
+⠀Symbol: ${token.symbol}
 ⠀
 \`\`\`
 Contract Address: \`${token.contractAddress}\`
@@ -272,6 +272,65 @@ Contract Address: \`${token.contractAddress}\`
 [PulseX Buy Link](${ipfsGatewayUrl})
 
 ${additionalMessage}
+
+  `;
+
+  return message;
+}
+
+async function getCurrentMintPrice() {
+  const data = {
+    jsonrpc: "2.0",
+    method: "eth_call",
+    params: [
+      {
+        to: "0x71348a7C0805898999A0f54fcf134974e1C4dFad",
+        data: "0xeb91d37e" // function selector for getCurrentPrice()
+      },
+      "latest"
+    ],
+    id: 1
+  };
+
+  const response = await axiosInstance.post(rpcEndpoint, data, {
+    headers: { "Content-Type": "application/json" }
+  });
+
+  const resultHex = response.data.result;
+  // Assuming that getCurrentPrice returns a uint256.
+  const mintPrice = parseInt(resultHex, 16);
+  return mintPrice;
+}
+
+async function generateVibePassMessage(token) {
+  
+  const mintPriceRaw = await getCurrentMintPrice();
+  const oneswapPriceRaw = await getUSDPrice(token);
+  
+  // Divide by 1e18, then round up to the next whole number, and round oneswapPrice to 8 decimals
+  const mintPrice = Math.ceil(mintPriceRaw / 1e18);
+  const oneswapPriceStr = oneswapPriceRaw.toFixed(8); // returns a string with 8 decimals
+  const oneswapPriceEscaped = oneswapPriceStr.replace(/\./g, '\\.');
+  const mintPriceUSD = Math.ceil(mintPrice * oneswapPriceRaw);
+
+  // Format the message to include token details and the concatenated URL
+  const message = `
+The VibePass is your passport and identification within the Vibratile token protocol, granting you access to higher levels of participation\\. Owning a VibePass sets you apart from general users, offering exclusive benefits and deeper involvement in the ecosystem\\.
+
+*Seigniorage Rewards*
+Seigniorage is the profit generated from issuing currency, specifically the difference between the value of money and the cost to produce it\\.
+
+*Function*
+When the token price exceeds the peg, inflation occurs to bring the price back down\\. The seigniorage generated from this process is distributed to VibePass holders in accordance to the amount of XUSD they have burned\\.
+
+*Buying a VibePass*
+Your Vibescore must be below 400\\. You can drop your VibeScore by buying XUSD, it's better to do so by buying XUSD repeatedly in smaller amounts \\(min 500\\)
+
+Required 1SWAP \\= ${mintPrice}
+1SWAP Price \\= ${oneswapPriceEscaped}
+Mint Price \\(USD\\) \\= \\$*${mintPriceUSD}*
+
+You can mint a VibePass or use the calculator to estimate rewards here: [https://www\\.x\\-usd\\.net/VibePass](https://www.x-usd.net/VibePass)  
 
   `;
 
@@ -293,5 +352,6 @@ module.exports = {
   getUSDPrice,
   escapeMarkdownV2,
   getIpfsGateway,
-  generateContractMessage
+  generateContractMessage,
+  generateVibePassMessage
 };

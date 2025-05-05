@@ -8,6 +8,8 @@ price - Current price
 30d - 30 Day Price Chart
 burned - Burned Token Stats
 burned_chart - Burned Token Chart
-supply - Total Supply Chart
+supply - Total Supply Chart (30d)
+supply_all_time - Total Supply Chart
 marketcap - Marketcap Chart
 holders - Total Holders Chart
+vibepass - VibePass Info

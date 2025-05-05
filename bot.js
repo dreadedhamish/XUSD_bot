@@ -46,7 +46,7 @@ const { fetchPriceMultiBlock, formatPriceChangesMessage } = require('./price');
 const { generatePriceChart, generateSupplyChart, generateBurnedChart, generateHoldersChart, generateMCapChart } = require('./charts');
 
 // Import helpers
-const { getTotalBurned, getUSDPrice, escapeMarkdownV2, getIpfsGateway, generateContractMessage } = require('./helpers');
+const { getTotalBurned, getUSDPrice, escapeMarkdownV2, getIpfsGateway, generateContractMessage, generateVibePassMessage } = require('./helpers');
 
 // Define contract addresses and main pairs
 // Non-checksummed addresses only
@@ -60,10 +60,10 @@ const tokens = [
     featureColour: '#2EAEA2',
     chatID: '-1002100001267',
     flair: `
-⠀⣠⠂⠉⠉⠳⣦   Oneswap
-⣼⠹⣄⡀⠠⠊⠈⢧  Liquidity
-⢻⡄⠊⠙⠛⢆⠀⢸  Yield
-⠀⠛⠧⣄⣀⡌⠔⠁  Layer`
+⠀⠀⣠⠂⠉⠉⠳⣦   Oneswap
+⠀⣼⠹⣄⡀⠠⠊⠈⢧  Liquidity
+⠀⢻⡄⠊⠙⠛⢆⠀⢸  Yield
+⠀⠀⠛⠧⣄⣀⡌⠔⠁  Layer`
   },
   {
     name: 'XUSD Vibratile Asset',
@@ -74,9 +74,9 @@ const tokens = [
     featureColour: '#9A0093',
     chatID: '-1002185937112',
     flair: `
-⠘⢿⣷⣄⠀⡠⠾⠿⠃  XUSD
-⠀⠀⠙⢿⣿⣷⣄⠀⠀  Vibratile
-⢠⣶⡶⠊⠀⠙⢿⣷⡄  Asset`
+⠀⠘⢿⣷⣄⠀⡠⠾⠿⠃  XUSD
+⠀⠀⠀⠙⢿⣿⣷⣄⠀⠀  Vibratile
+⠀⢠⣶⡶⠊⠀⠙⢿⣷⡄  Asset`
   },
   {
     name: 'VIBES',
@@ -86,7 +86,11 @@ const tokens = [
     position: 'token0',
     featureColour: '#64579B',
     chatID: '',
-    flair: `VIBES`
+    flair: `
+⠀⢠⣄⠀⠀⠀⠀⢠⣦
+⠀⠈⢿⡇⠀⠀⠀⣸⠃
+⠀⠀⣿⠇⠀⣀⠖⠁⠀
+⠀⢸⡿⠄⠊⠀⠀⠀⠀`
   }
   // Add more tokens here as needed
 ];
@@ -662,6 +666,26 @@ bot.command('holders', async (ctx) => {
       console.error('Error generating chart:', error);
       await ctx.reply('Sorry, there was an error generating the chart.');
     }
+});
+
+// Command handler for /vibepass
+bot.command('vibepass', async (ctx) => {
+  console.log('Chat ID: ', ctx.chat.id);
+  try {
+    const token = tokens[0]
+    
+    const message = await generateVibePassMessage(token);
+    
+    console.log('Payload:', message); // Log the payload
+    
+    await ctx.reply(message, {
+      parse_mode: 'MarkdownV2',
+      disable_web_page_preview: true
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    await ctx.reply('Sorry, there was an error fetching the IPFS gateway.');
+  }
 });
 
 // Call the subscribe function to start listening for events
