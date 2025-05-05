@@ -246,17 +246,38 @@ async function generateContractMessage(token) {
   // Determine the additional message based on the token symbol
   let additionalMessage;
   if (token.symbol === 'XUSD') {
-    additionalMessage = 'Looking for OneSwap? /1swapcontract\nLooking for VIBES? /vibescontract';
+    additionalMessage = 'Looking for OneSwap? /1swapcontract\nLooking for VIBES? /vibescontract\nLooking for oOneSwap? /o1swapcontract';
   } else if (token.symbol === '1SWAP') {
-    additionalMessage = 'Looking for XUSD? /xusdcontract\nLooking for VIBES? /vibescontract';
+    additionalMessage = 'Looking for XUSD? /xusdcontract\nLooking for VIBES? /vibescontract\nLooking for oOneSwap? /o1swapcontract';
   } else if (token.symbol === 'VIBES') {
-    additionalMessage = 'Looking for XUSD? /xusdcontract\nLooking for OneSwap? /1swapcontract';
+    additionalMessage = 'Looking for XUSD? /xusdcontract\nLooking for OneSwap? /1swapcontract\nLooking for oOneSwap? /o1swapcontract';
+  } else if (token.symbol === 'o1SWAP') {
+    additionalMessage = 'Looking for XUSD? /xusdcontract\nLooking for OneSwap? /1swapcontract\nLooking for VIBES? /vibescontract';  
   } else {
     throw new Error('Unknown token symbol');
   }
 
+  let message;
+  if (token.symbol === 'o1SWAP') {
   // Format the message to include token details and the concatenated URL
-  const message = `
+    message = `
+\`\`\`
+⠀
+⠀Name: ${token.name}
+⠀Symbol: ${token.symbol}
+⠀
+\`\`\`
+Contract Address: \`${token.contractAddress}\`
+
+o1SWAP is a reward token that is earned by staking LP or through trading\\. It is not designed to be directly traded on a DEX\\.
+
+[Scan](https://scan.pulsechain.com/address/${token.contractAddress})   \\|   [Contract](https://scan.pulsechain.com/address/${token.contractAddress}?tab=contract)
+
+${additionalMessage}
+
+  `;
+  } else {
+    message = `
 \`\`\`
 
 ${token.flair}
@@ -274,8 +295,40 @@ Contract Address: \`${token.contractAddress}\`
 ${additionalMessage}
 
   `;
-
+  }
   return message;
+}
+
+async function generateAllContractMessages(tokens) {
+  const messages = [];
+  
+  for (const token of tokens) {
+    
+    // Determine the additional message based on the token symbol
+    let additionalMessage;
+    if (token.symbol === 'XUSD') {
+      additionalMessage = ' /xusdcontract';
+    } else if (token.symbol === '1SWAP') {
+      additionalMessage = ' /1swapcontract';
+    } else if (token.symbol === 'VIBES') {
+      additionalMessage = ' /vibescontract';
+    } else if (token.symbol === 'o1SWAP') {
+      additionalMessage = ' /o1SWAPcontract';
+    } else {
+      throw new Error('Unknown token symbol');
+    }
+    
+    // Build the message based on the token symbol
+    let message = `
+Name: *${token.name}*
+Symbol: *${token.symbol}*
+CA: \`${token.contractAddress}\`
+Details: ${additionalMessage}
+`;
+    messages.push(message.trim());
+  }
+  
+  return messages;
 }
 
 async function getCurrentMintPrice() {
@@ -353,5 +406,6 @@ module.exports = {
   escapeMarkdownV2,
   getIpfsGateway,
   generateContractMessage,
-  generateVibePassMessage
+  generateVibePassMessage,
+  generateAllContractMessages
 };

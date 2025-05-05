@@ -46,7 +46,7 @@ const { fetchPriceMultiBlock, formatPriceChangesMessage } = require('./price');
 const { generatePriceChart, generateSupplyChart, generateBurnedChart, generateHoldersChart, generateMCapChart } = require('./charts');
 
 // Import helpers
-const { getTotalBurned, getUSDPrice, escapeMarkdownV2, getIpfsGateway, generateContractMessage, generateVibePassMessage } = require('./helpers');
+const { getTotalBurned, getUSDPrice, escapeMarkdownV2, getIpfsGateway, generateContractMessage, generateVibePassMessage, generateAllContractMessages } = require('./helpers');
 
 // Define contract addresses and main pairs
 // Non-checksummed addresses only
@@ -54,7 +54,8 @@ const tokens = [
   {
     name: 'OneSwap',
     symbol: '1SWAP',
-    contractAddress: '0xeb14f3192a37ad2501f3bf6627c565e6799ad661',
+    contractAddress: '0xEb14f3192A37ad2501F3BF6627C565e6799aD661',
+    // contractAddress: '0xeb14f3192a37ad2501f3bf6627c565e6799ad661',
     mainPair: '0x246766d81bad75bca1d9189fc0d90ced7f057b15',
     position: 'token1',
     featureColour: '#2EAEA2',
@@ -68,7 +69,8 @@ const tokens = [
   {
     name: 'XUSD Vibratile Asset',
     symbol: 'XUSD',
-    contractAddress: '0xbbea78397d4d4590882efcc4820f03074ab2ab29',
+    contractAddress: '0xbbeA78397d4d4590882EFcc4820f03074aB2AB29',
+    // contractAddress: '0xbbea78397d4d4590882efcc4820f03074ab2ab29',
     mainPair: '0xeb5c0c2f096604a62585ee378f664fbf6620b5a5',
     position: 'token1',
     featureColour: '#9A0093',
@@ -91,6 +93,16 @@ const tokens = [
 ⠀⠈⢿⡇⠀⠀⠀⣸⠃
 ⠀⠀⣿⠇⠀⣀⠖⠁⠀
 ⠀⢸⡿⠄⠊⠀⠀⠀⠀`
+  },
+  {
+    name: 'oOneSwap',
+    symbol: 'o1SWAP',
+    contractAddress: '0x6c2d12dD630424CB2B41A54942308280660a751b',
+    mainPair: '',
+    position: '',
+    featureColour: '',
+    chatID: '',
+    flair: ``
   }
   // Add more tokens here as needed
 ];
@@ -197,6 +209,58 @@ bot.command('vibescontract', async (ctx) => {
     await ctx.reply('Sorry, there was an error.');
   }
 });
+
+bot.command('o1swapcontract', async (ctx) => {
+  console.log('Chat ID: ', ctx.chat.id);
+  try {  
+    const message = await generateContractMessage(tokens[3]);
+    console.log('Payload before escaping:', message); // Log the payload before escaping
+    
+    await ctx.reply(message, {
+      parse_mode: 'MarkdownV2',
+      disable_web_page_preview: true
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    await ctx.reply('Sorry, there was an error.');
+  }
+});
+
+
+// bot.command('contracts', async (ctx) => {
+//   console.log('Chat ID: ', ctx.chat.id);
+//   try {  
+//     const message = await generateAllContractMessages(tokens);
+//     console.log('Payload before escaping:', message); // Log the payload before escaping
+    
+//     await ctx.reply(message, {
+//       parse_mode: 'MarkdownV2',
+//       disable_web_page_preview: true
+//     });
+//   } catch (error) {
+//     console.error('Error:', error);
+//     await ctx.reply('Sorry, there was an error.');
+//   }
+// });
+
+bot.command('contracts', async (ctx) => {
+  console.log('Chat ID: ', ctx.chat.id);
+  try {
+    
+    const messagesArray = await generateAllContractMessages(tokens);
+    const combinedMessage = messagesArray.join("\n\n");
+    console.log('Payload:', combinedMessage); // Log the payload
+    
+    await ctx.reply(combinedMessage, {
+      parse_mode: 'MarkdownV2',
+      disable_web_page_preview: true
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    await ctx.reply('Sorry, there was an error fetching the IPFS gateway.');
+  }
+});
+
 
 // bot.command('contract', async (ctx) => {
 //   console.log('Chat ID: ', ctx.chat.id);
