@@ -752,6 +752,20 @@ bot.command('vibepass', async (ctx) => {
   }
 });
 
+
+bot.command('vibes', async (ctx) => {
+  try {
+    const filePath = path.join(__dirname, 'Vibing_master.png');
+    await ctx.replyWithPhoto(new InputFile(filePath), {
+      disable_web_page_preview: true
+    });
+    console.log('Sent vibes image.');
+  } catch (error) {
+    console.error('Error sending vibes image:', error);
+    await ctx.reply('Sorry, there was an error sending the image.');
+  }
+});
+
 // Call the subscribe function to start listening for events
 
 subscribe(bot).then(() => {

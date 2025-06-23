@@ -13,3 +13,5 @@ supply_all_time - Total Supply Chart
 marketcap - Marketcap Chart
 holders - Total Holders Chart
 vibepass - VibePass Info
+contracts - All Ecosystem Contracts
+vibes - Show Vibes Graphic
